@@ -6,6 +6,8 @@ lib/
 .bsb.lock
 .merlin
 
+dist
+
 # Editor directories and files
 .vscode/
 .idea/
