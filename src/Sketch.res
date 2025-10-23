@@ -271,7 +271,5 @@ let sketch = (p: P5.t) => {
   })
 }
 
-// p5 will be imported and made available globally by main.mjs before this module loads
-// Access it from window to ensure it's available
-let _ = Console.log("init")
-let _ = %raw("new window.p5(sketch)")
+// Create p5 instance using the imported p5 constructor
+let _ = P5.make(sketch)

@@ -1,16 +1,20 @@
 // P5.js bindings for ReScript
 
+// The p5 instance type
 type t
+
+// Import p5 constructor from npm package
+@module("p5") @new external make: (t => unit) => t = "default"
 
 // Core drawing functions
 @send external background: (t, int) => unit = "background"
 @send external background2: (t, int, int, int) => unit = "background"
 @send external fill: (t, int) => unit = "fill"
 @send external fill3: (t, int, int, int) => unit = "fill"
-@send external noFill: (t) => unit = "noFill"
+@send external noFill: t => unit = "noFill"
 @send external stroke: (t, int) => unit = "stroke"
 @send external stroke3: (t, int, int, int) => unit = "stroke"
-@send external noStroke: (t) => unit = "noStroke"
+@send external noStroke: t => unit = "noStroke"
 @send external strokeWeight: (t, int) => unit = "strokeWeight"
 
 // Shape functions

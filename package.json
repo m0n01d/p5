@@ -17,11 +17,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@rescript/core": "^1.6.1",
     "rescript": "^11.1.4",
     "vite": "^5.0.0"
   },
   "dependencies": {
+    "@rescript/core": "^1.6.1",
     "p5": "^1.9.0"
   }
 }
