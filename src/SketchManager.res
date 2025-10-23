@@ -2,13 +2,14 @@
 
 type sketchConfig = {
   name: string,
-  createFn: unit => P5.t => unit,
+  importPath: string,
 }
 
 type state = {
   currentP5: option<P5.t>,
   sketches: array<sketchConfig>,
   currentIndex: int,
+  isLoading: bool,
 }
 
 // Global state
@@ -16,6 +17,7 @@ let state = ref({
   currentP5: None,
   sketches: [],
   currentIndex: 0,
+  isLoading: false,
 })
 
 // P5 remove binding
@@ -80,30 +82,56 @@ let switchToSketch = (index: int) => {
   // Always remove current sketch first
   removeCurrentSketch()
 
-  // Small delay to ensure removal completes
-  %raw(`setTimeout(() => {}, 10)`)
+  // Set loading state
+  state := {...state.contents, isLoading: true, currentIndex: index}
 
   // Get the sketch config
   switch state.contents.sketches[index] {
-  | None => Console.log(`Sketch at index ${index->Int.toString} not found`)
+  | None => {
+      Console.log(`Sketch at index ${index->Int.toString} not found`)
+      state := {...state.contents, isLoading: false}
+    }
   | Some(config) => {
-      Console.log(`Creating new sketch: ${config.name}`)
+      Console.log(`Dynamically loading sketch: ${config.name}`)
 
-      // Create new p5 instance with parent container
-      // This prevents p5 from creating canvas in body first
-      let sketchFn = config.createFn()
-      let p5Instance = P5.makeWithParent(sketchFn, "sketch")
+      // Dynamically import the sketch module and p5
+      %raw(`
+        (function(importPath, sketchName) {
+          Promise.all([
+            import(importPath),
+            import('p5')
+          ])
+            .then(([sketchModule, p5Module]) => {
+              console.log('Sketch module loaded:', sketchName);
+              const p5Constructor = p5Module.default;
+              const sketchFn = sketchModule.createSketch();
+              const p5Instance = new p5Constructor(sketchFn, 'sketch');
 
-      Console.log("New sketch attached to container")
+              // Update state with loaded sketch
+              window.__currentP5Instance = p5Instance;
+              window.__sketchLoadComplete = true;
+            })
+            .catch(err => {
+              console.error('Failed to load sketch:', err);
+              window.__sketchLoadError = err;
+            });
+        })
+      `)(config.importPath, config.name)
 
-      // Update state
-      state := {
-        ...state.contents,
-        currentP5: Some(p5Instance),
-        currentIndex: index,
-      }
-
-      Console.log(`=== Sketch switch complete ===`)
+      // Poll for completion
+      %raw(`
+        (function checkLoaded() {
+          if (window.__sketchLoadComplete) {
+            window.__sketchLoadComplete = false;
+            return;
+          }
+          if (window.__sketchLoadError) {
+            window.__sketchLoadError = null;
+            return;
+          }
+          setTimeout(checkLoaded, 50);
+        })()
+      `)
     }
   }
 }
@@ -217,13 +245,13 @@ let exportCurrentSketch = () => {
   }
 }
 
-// Register a sketch
-let registerSketch = (name: string, createFn: unit => P5.t => unit) => {
+// Register a sketch with its import path
+let registerSketch = (name: string, importPath: string) => {
   state := {
     ...state.contents,
-    sketches: Array.concat(state.contents.sketches, [{name, createFn}]),
+    sketches: Array.concat(state.contents.sketches, [{name, importPath}]),
   }
-  Console.log(`Registered sketch: ${name}`)
+  Console.log(`Registered sketch: ${name} (${importPath})`)
 }
 
 // Initialize the sketch manager

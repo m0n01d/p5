@@ -1,16 +1,15 @@
 // Entry point for Vite bundler
-console.log('Initializing sketches...');
+console.log('Initializing sketches with lazy loading...');
 
-// Import all sketches
-import { createSketch as createPlotterArtSketch } from './PlotterArtSketch.res.mjs';
-import { createSketch as createWFCPlotterSketch } from './WFCPlotterSketch.res.mjs';
-import { createSketch as createGridSketch } from './GridSketch.res.mjs';
+// Import only the sketch manager
 import { registerSketch, init } from './SketchManager.res.mjs';
 
-// Register all available sketches
-registerSketch('Plotter Art - Circles', createPlotterArtSketch);
-registerSketch('Wave Function Collapse', createWFCPlotterSketch);
-registerSketch('Grid - Tiled Shapes', createGridSketch);
+// Register sketches with their import paths (they'll be loaded on demand)
+registerSketch('Plotter Art - Circles', './PlotterArtSketch.res.mjs');
+registerSketch('Wave Function Collapse', './WFCPlotterSketch.res.mjs');
+registerSketch('Grid - Tiled Shapes', './GridSketch.res.mjs');
 
 // Initialize the sketch manager
 init();
+
+console.log('Sketch manager ready - sketches will load on demand');
