@@ -2,13 +2,13 @@
 console.log('Initializing sketches...');
 
 // Import all sketches
-import { createSketch as createPlotterSketch } from './Sketch.res.mjs';
-import { createSketch as createWFCSketch } from './WFCSketch.res.mjs';
+import { createSketch as createPlotterArtSketch } from './PlotterArtSketch.res.mjs';
+import { createSketch as createWFCPlotterSketch } from './WFCPlotterSketch.res.mjs';
 import { registerSketch, init } from './SketchManager.res.mjs';
 
 // Register all available sketches
-registerSketch('Plotter Art', createPlotterSketch);
-registerSketch('Wave Function Collapse', createWFCSketch);
+registerSketch('Plotter Art - Circles', createPlotterArtSketch);
+registerSketch('Wave Function Collapse', createWFCPlotterSketch);
 
 // Initialize the sketch manager
 init();
