@@ -170,8 +170,8 @@ let sketch = (p: P5.t) => {
     let svgContent = svgHeader ++ borderPath ++ circles.contents ++ svgFooter
 
     // Create blob and download
-    let blob = %raw(`new Blob([svgContent], {type: 'image/svg+xml'})`)
-    let url = %raw(`URL.createObjectURL(blob)`)
+    let blob = %raw(`(content) => new Blob([content], {type: 'image/svg+xml'})`)(svgContent)
+    let url = %raw(`(b) => URL.createObjectURL(b)`)(blob)
 
     let link = createElement("a")
     link->setHref(url)
@@ -183,7 +183,7 @@ let sketch = (p: P5.t) => {
     link->click
     body->removeChild(link)
 
-    %raw(`URL.revokeObjectURL(url)`)
+    %raw(`(u) => URL.revokeObjectURL(u)`)(url)
   }
 
   // Function to handle export button click

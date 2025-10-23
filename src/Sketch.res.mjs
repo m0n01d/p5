@@ -125,7 +125,7 @@ function sketch(p) {
   var exportSVG = function () {
     var svgWidth = currentSize.contents.widthMm;
     var svgHeight = currentSize.contents.heightMm;
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + svgWidth.toString() + "mm\" height=\"" + svgHeight.toString() + "mm\" viewBox=\"0 0 " + currentSize.contents.width.toString() + " " + currentSize.contents.height.toString() + "\">\n  <rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n  <g stroke=\"black\" fill=\"none\">";
+    var svgHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + svgWidth.toString() + "mm\" height=\"" + svgHeight.toString() + "mm\" viewBox=\"0 0 " + currentSize.contents.width.toString() + " " + currentSize.contents.height.toString() + "\">\n  <rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n  <g stroke=\"black\" fill=\"none\">";
     var centerX = currentSize.contents.width / 2.0;
     var centerY = currentSize.contents.height / 2.0;
     var maxRadius = Math.min(centerX, centerY) - 50.0;
@@ -134,9 +134,10 @@ function sketch(p) {
       var radius = maxRadius * i / 20;
       circles = circles + ("\n    <circle cx=\"" + centerX.toString() + "\" cy=\"" + centerY.toString() + "\" r=\"" + radius.toString() + "\" stroke-width=\"1\"/>");
     }
-    "\n    <rect x=\"10\" y=\"10\" width=\"" + (currentSize.contents.width - 20 | 0).toString() + "\" height=\"" + (currentSize.contents.height - 20 | 0).toString() + "\" stroke-width=\"2\"/>";
-    ((new Blob([svgContent], {type: 'image/svg+xml'})));
-    var url = (URL.createObjectURL(blob));
+    var borderPath = "\n    <rect x=\"10\" y=\"10\" width=\"" + (currentSize.contents.width - 20 | 0).toString() + "\" height=\"" + (currentSize.contents.height - 20 | 0).toString() + "\" stroke-width=\"2\"/>";
+    var svgContent = svgHeader + borderPath + circles + "  </g>\n</svg>";
+    var blob = ((content) => new Blob([content], {type: 'image/svg+xml'}))(svgContent);
+    var url = ((b) => URL.createObjectURL(b))(blob);
     var link = document.createElement("a");
     link.href = url;
     link.download = "plotter-art.svg";
@@ -145,7 +146,7 @@ function sketch(p) {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    return (URL.revokeObjectURL(url));
+    return ((u) => URL.revokeObjectURL(u))(url);
   };
   var handleExport = function () {
     var formatSelect = document.getElementById("export-format");
