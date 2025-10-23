@@ -1,0 +1,22 @@
+{
+  "name": "p5-rescript-project",
+  "sources": [
+    {
+      "dir": "src",
+      "subdirs": true
+    }
+  ],
+  "package-specs": [
+    {
+      "module": "esmodule",
+      "in-source": true
+    }
+  ],
+  "suffix": ".res.js",
+  "bs-dependencies": [
+    "@rescript/core"
+  ],
+  "warnings": {
+    "error": "+101"
+  }
+}

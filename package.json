@@ -1,0 +1,20 @@
+{
+  "name": "p5-rescript-project",
+  "version": "1.0.0",
+  "description": "A p5.js project built with ReScript",
+  "scripts": {
+    "build": "rescript",
+    "clean": "rescript clean",
+    "dev": "rescript build -w"
+  },
+  "keywords": ["p5js", "rescript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@rescript/core": "^1.6.1",
+    "rescript": "^11.1.4"
+  },
+  "dependencies": {
+    "p5": "^1.9.0"
+  }
+}
