@@ -24,10 +24,14 @@ type t
 
 // Canvas functions
 @send external createCanvas: (t, int, int) => unit = "createCanvas"
+@send external resizeCanvas: (t, int, int) => unit = "resizeCanvas"
 
 // Math functions
 @send external random: (t, float) => float = "random"
 @send external random2: (t, float, float) => float = "random"
+
+// DOM manipulation
+@send external select: (t, string) => Dom.element = "select"
 
 // Properties
 @get external width: t => int = "width"

@@ -27,15 +27,55 @@
       font-weight: 500;
     }
 
+    .controls {
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .controls label {
+      color: #ffffff;
+      font-size: 14px;
+    }
+
+    .controls select {
+      padding: 8px 12px;
+      border-radius: 4px;
+      border: 1px solid #444;
+      background-color: #2a2a2a;
+      color: #ffffff;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .controls select:hover {
+      background-color: #333;
+    }
+
     canvas {
       display: block;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      background-color: #ffffff;
     }
   </style>
 </head>
 <body>
   <main>
-    <h1>P5.js + ReScript Demo</h1>
+    <h1>Pen Plotter - P5.js + ReScript</h1>
+    <div class="controls">
+      <label for="paper-size">Paper Size:</label>
+      <select id="paper-size">
+        <option value="A4">A4 (210 × 297 mm)</option>
+        <option value="A3">A3 (297 × 420 mm)</option>
+        <option value="A5">A5 (148 × 210 mm)</option>
+        <option value="Letter">Letter (8.5 × 11 in)</option>
+        <option value="Legal">Legal (8.5 × 14 in)</option>
+        <option value="Tabloid">Tabloid (11 × 17 in)</option>
+        <option value="Square">Square (300 × 300 mm)</option>
+      </select>
+    </div>
     <div id="sketch-container"></div>
   </main>
 
