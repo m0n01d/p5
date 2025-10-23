@@ -29,8 +29,12 @@ type t
 
 // Canvas functions
 @send external createCanvas: (t, int, int) => t = "createCanvas"
+@send external createCanvasWebGL: (t, int, int, string) => t = "createCanvas"
 @send external parent: (t, string) => t = "parent"
 @send external resizeCanvas: (t, int, int) => unit = "resizeCanvas"
+
+// WEBGL constant
+@get external _WEBGL: t => string = "WEBGL"
 
 // Math functions
 @send external random: (t, float) => float = "random"
