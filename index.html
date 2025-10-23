@@ -150,10 +150,7 @@
       <div id="sketch-container"></div>
     </main>
 
-    <!-- Load p5.js from CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
-
-    <!-- Load our ReScript sketch as a module -->
-    <script type="module" src="./src/Sketch.res.mjs"></script>
+    <!-- Vite will bundle everything including p5 and the sketch -->
+    <script type="module" src="/src/main.mjs"></script>
   </body>
 </html>

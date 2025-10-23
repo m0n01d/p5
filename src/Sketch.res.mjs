@@ -207,7 +207,7 @@ function sketch(p) {
 
 console.log("init");
 
-((new p5(sketch)));
+((new window.p5(sketch)));
 
 export {
   mmToPixels ,

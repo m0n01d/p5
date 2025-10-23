@@ -271,9 +271,7 @@ let sketch = (p: P5.t) => {
   })
 }
 
-// Access global p5 constructor
-@val external p5: 'a = "p5"
-
-// Create the sketch instance using global p5
+// p5 will be imported and made available globally by main.mjs before this module loads
+// Access it from window to ensure it's available
 let _ = Console.log("init")
-let _ = %raw("new p5(sketch)")
+let _ = %raw("new window.p5(sketch)")
