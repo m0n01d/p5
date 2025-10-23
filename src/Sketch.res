@@ -10,18 +10,34 @@
 type paperSize = {
   width: int,
   height: int,
+  widthMm: float,
+  heightMm: float,
+}
+
+// Convert mm to pixels at 96 DPI (3.7795275591 pixels per mm)
+let mmToPixels = (mm: float): int => {
+  (mm *. 3.7795275591)->Float.toInt
 }
 
 let getPaperSize = (size: string): paperSize => {
   switch size {
-  | "A4" => {width: 794, height: 1123} // 210mm × 297mm
-  | "A3" => {width: 1123, height: 1587} // 297mm × 420mm
-  | "A5" => {width: 559, height: 794} // 148mm × 210mm
-  | "Letter" => {width: 816, height: 1056} // 8.5in × 11in
-  | "Legal" => {width: 816, height: 1344} // 8.5in × 14in
-  | "Tabloid" => {width: 1056, height: 1632} // 11in × 17in
-  | "Square" => {width: 1134, height: 1134} // 300mm × 300mm
-  | _ => {width: 794, height: 1123} // Default to A4
+  | "A4" => {width: 794, height: 1123, widthMm: 210.0, heightMm: 297.0}
+  | "A3" => {width: 1123, height: 1587, widthMm: 297.0, heightMm: 420.0}
+  | "A5" => {width: 559, height: 794, widthMm: 148.0, heightMm: 210.0}
+  | "Letter" => {width: 816, height: 1056, widthMm: 215.9, heightMm: 279.4}
+  | "Legal" => {width: 816, height: 1344, widthMm: 215.9, heightMm: 355.6}
+  | "Tabloid" => {width: 1056, height: 1632, widthMm: 279.4, heightMm: 431.8}
+  | "Square" => {width: 1134, height: 1134, widthMm: 300.0, heightMm: 300.0}
+  | _ => {width: 794, height: 1123, widthMm: 210.0, heightMm: 297.0} // Default to A4
+  }
+}
+
+let customPaperSize = (widthMm: float, heightMm: float): paperSize => {
+  {
+    width: mmToPixels(widthMm),
+    height: mmToPixels(heightMm),
+    widthMm,
+    heightMm,
   }
 }
 
@@ -34,6 +50,23 @@ external getElementById: string => Js.Nullable.t<Dom.element> = "getElementById"
 @send
 external addEventListener: (Dom.element, string, unit => unit) => unit = "addEventListener"
 
+// Canvas export bindings
+@send external toDataURL: (Dom.element, string, float) => string = "toDataURL"
+
+@val @scope("document")
+external createElement: string => Dom.element = "createElement"
+
+@set external setHref: (Dom.element, string) => unit = "href"
+@set external setDownload: (Dom.element, string) => unit = "download"
+@get external style: Dom.element => {..} = "style"
+@send external click: Dom.element => unit = "click"
+@send external appendChild: (Dom.element, Dom.element) => unit = "appendChild"
+@send external removeChild: (Dom.element, Dom.element) => unit = "removeChild"
+@val @scope("document") external body: Dom.element = "body"
+
+// For custom size inputs
+@send external parseFloat: string => float = "parseFloat"
+
 // Sketch function that defines setup and draw
 let sketch = (p: P5.t) => {
   // Current paper size state
@@ -45,9 +78,125 @@ let sketch = (p: P5.t) => {
     switch selector->Js.Nullable.toOption {
     | Some(element) => {
         let size = element->value
-        currentSize := getPaperSize(size)
+
+        // Show/hide custom size inputs
+        let customDiv = getElementById("custom-size")
+        switch customDiv->Js.Nullable.toOption {
+        | Some(div) => {
+            let divStyle = div->style
+            if size == "Custom" {
+              divStyle["display"] = "flex"
+            } else {
+              divStyle["display"] = "none"
+              currentSize := getPaperSize(size)
+              p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
+              p->P5.background(255)
+            }
+          }
+        | None => ()
+        }
+      }
+    | None => ()
+    }
+  }
+
+  // Function to apply custom size
+  let applyCustomSize = () => {
+    let widthInput = getElementById("custom-width")
+    let heightInput = getElementById("custom-height")
+
+    switch (widthInput->Js.Nullable.toOption, heightInput->Js.Nullable.toOption) {
+    | (Some(wInput), Some(hInput)) => {
+        let widthMm = wInput->value->Float.fromString->Option.getWithDefault(210.0)
+        let heightMm = hInput->value->Float.fromString->Option.getWithDefault(297.0)
+        currentSize := customPaperSize(widthMm, heightMm)
         p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
-        p->P5.background(255) // White background for paper
+        p->P5.background(255)
+      }
+    | _ => ()
+    }
+  }
+
+  // Function to export canvas as PNG
+  let exportPNG = () => {
+    let canvas = p->P5.canvas
+    let dataUrl = canvas->toDataURL("image/png", 1.0)
+
+    let link = createElement("a")
+    link->setHref(dataUrl)
+    link->setDownload("plotter-art.png")
+    let linkStyle = link->style
+    linkStyle["display"] = "none"
+
+    body->appendChild(link)
+    link->click
+    body->removeChild(link)
+  }
+
+  // Function to export canvas as SVG
+  let exportSVG = () => {
+    // Create SVG representation
+    let svgWidth = currentSize.contents.widthMm
+    let svgHeight = currentSize.contents.heightMm
+
+    let svgHeader = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth->Float.toString}mm" height="${svgHeight->Float.toString}mm" viewBox="0 0 ${currentSize.contents.width->Int.toString} ${currentSize.contents.height->Int.toString}">
+  <rect width="100%" height="100%" fill="white"/>
+  <g stroke="black" fill="none">`
+
+    let svgFooter = `  </g>
+</svg>`
+
+    // Generate SVG paths from canvas drawing
+    // For now, we'll convert circles to SVG circle elements
+    let centerX = currentSize.contents.width->Int.toFloat /. 2.0
+    let centerY = currentSize.contents.height->Int.toFloat /. 2.0
+    let maxRadius = Js.Math.min_float(centerX, centerY) -. 50.0
+    let numCircles = 20
+
+    let circles = ref("")
+    for i in 1 to numCircles {
+      let radius = maxRadius *. Int.toFloat(i) /. Int.toFloat(numCircles)
+      circles :=
+        circles.contents ++
+        `\n    <circle cx="${centerX->Float.toString}" cy="${centerY->Float.toString}" r="${radius->Float.toString}" stroke-width="1"/>`
+    }
+
+    // Add border rectangle
+    let borderPath = `\n    <rect x="10" y="10" width="${(currentSize.contents.width - 20)
+        ->Int.toString}" height="${(currentSize.contents.height - 20)
+        ->Int.toString}" stroke-width="2"/>`
+
+    let svgContent = svgHeader ++ borderPath ++ circles.contents ++ svgFooter
+
+    // Create blob and download
+    let blob = %raw(`new Blob([svgContent], {type: 'image/svg+xml'})`)
+    let url = %raw(`URL.createObjectURL(blob)`)
+
+    let link = createElement("a")
+    link->setHref(url)
+    link->setDownload("plotter-art.svg")
+    let linkStyle = link->style
+    linkStyle["display"] = "none"
+
+    body->appendChild(link)
+    link->click
+    body->removeChild(link)
+
+    %raw(`URL.revokeObjectURL(url)`)
+  }
+
+  // Function to handle export button click
+  let handleExport = () => {
+    let formatSelect = getElementById("export-format")
+    switch formatSelect->Js.Nullable.toOption {
+    | Some(element) => {
+        let format = element->value
+        if format == "png" {
+          exportPNG()
+        } else if format == "svg" {
+          exportSVG()
+        }
       }
     | None => ()
     }
@@ -64,6 +213,20 @@ let sketch = (p: P5.t) => {
     | Some(element) => element->addEventListener("change", updateCanvasSize)
     | None => ()
     }
+
+    // Add event listener to custom size apply button
+    let applyBtn = getElementById("apply-custom")
+    switch applyBtn->Js.Nullable.toOption {
+    | Some(element) => element->addEventListener("click", applyCustomSize)
+    | None => ()
+    }
+
+    // Add event listener to export button
+    let exportBtn = getElementById("export-btn")
+    switch exportBtn->Js.Nullable.toOption {
+    | Some(element) => element->addEventListener("click", handleExport)
+    | None => ()
+    }
   })
 
   // Draw - runs every frame
@@ -78,8 +241,8 @@ let sketch = (p: P5.t) => {
     p->P5.rect(
       10.0,
       10.0,
-      (currentSize.contents.width - 20)->Belt.Int.toFloat,
-      (currentSize.contents.height - 20)->Belt.Int.toFloat,
+      (currentSize.contents.width - 20)->Int.toFloat,
+      (currentSize.contents.height - 20)->Int.toFloat,
     )
 
     // Draw some example plotter art
@@ -88,13 +251,13 @@ let sketch = (p: P5.t) => {
     p->P5.noFill
 
     // Draw concentric circles in the center
-    let centerX = currentSize.contents.width->Belt.Int.toFloat /. 2.0
-    let centerY = currentSize.contents.height->Belt.Int.toFloat /. 2.0
+    let centerX = currentSize.contents.width->Int.toFloat /. 2.0
+    let centerY = currentSize.contents.height->Int.toFloat /. 2.0
     let maxRadius = Js.Math.min_float(centerX, centerY) -. 50.0
 
     let numCircles = 20
     for i in 1 to numCircles {
-      let radius = maxRadius *. Belt.Int.toFloat(i) /. Belt.Int.toFloat(numCircles)
+      let radius = maxRadius *. Int.toFloat(i) /. Int.toFloat(numCircles)
       p->P5.circle(centerX, centerY, radius *. 2.0)
     }
 
@@ -112,4 +275,5 @@ let sketch = (p: P5.t) => {
 @val external p5: 'a = "p5"
 
 // Create the sketch instance using global p5
+let _ = Console.log("init")
 let _ = %raw("new p5(sketch)")

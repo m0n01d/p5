@@ -47,3 +47,7 @@ type t
 // Mode functions
 @send external rectMode: (t, int) => unit = "rectMode"
 @send external ellipseMode: (t, int) => unit = "ellipseMode"
+
+// Canvas export functions
+@send external saveCanvas: (t, string, string) => unit = "saveCanvas"
+@get external canvas: t => Dom.element = "canvas"

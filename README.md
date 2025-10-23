@@ -8,6 +8,8 @@ A pen plotter simulation project using p5.js with ReScript, featuring type-safe 
 - **Latest ReScript**: Built with ReScript 11.1.4
 - **ES Modules**: Modern JavaScript module system
 - **Paper Size Selector**: Choose from common plotter paper sizes (A3, A4, A5, Letter, Legal, Tabloid, Square)
+- **Custom Paper Sizes**: Define your own canvas dimensions in millimeters
+- **Export to PNG/SVG**: Download your artwork at precise page dimensions
 - **Interactive Drawing**: Real-time mouse interaction with concentric circle patterns
 - **Pen Plotter Simulation**: White canvas with black line art mimicking pen plotter output
 
@@ -68,8 +70,37 @@ The application supports the following paper sizes:
 - **Legal**: 8.5 × 14 in (816 × 1344 px)
 - **Tabloid**: 11 × 17 in (1056 × 1632 px)
 - **Square**: 300 × 300 mm (1134 × 1134 px)
+- **Custom**: Define your own dimensions (10-2000 mm)
 
 Pixel dimensions are calculated at 96 DPI for screen display.
+
+## Export Functionality
+
+### PNG Export
+- Exports the canvas as a high-quality PNG image
+- Maintains the selected paper size dimensions
+- Perfect for digital display or printing
+
+### SVG Export
+- Generates a vector SVG file with exact millimeter dimensions
+- Includes `width` and `height` attributes in mm for accurate scaling
+- Ideal for pen plotters and vector graphics software
+- The SVG maintains proper aspect ratio and can be scaled infinitely
+
+### How to Export
+
+1. Select your desired paper size from the dropdown (or use Custom)
+2. Choose the export format (PNG or SVG)
+3. Click the "Download" button
+4. The file will be saved as `plotter-art.png` or `plotter-art.svg`
+
+### Custom Paper Sizes
+
+1. Select "Custom Size" from the paper size dropdown
+2. Enter your desired width and height in millimeters
+3. Click "Apply" to resize the canvas
+4. Create your artwork
+5. Export using the format of your choice
 
 ## Project Structure
 
