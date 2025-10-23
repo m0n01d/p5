@@ -315,7 +315,7 @@ function draw(p, paperSize) {
       cellSize: cellSize,
       collapsed: false
     };
-    p.frameRate(10.0);
+    p.frameRate(1200.0);
   }
   var grid = wfcState.contents.grid;
   grid.forEach(function (row, y) {

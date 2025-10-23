@@ -61,12 +61,18 @@ external createElement: string => Dom.element = "createElement"
 // Type for sketch drawing function
 type drawFn = (P5.t, paperSize) => unit
 
+// Global current paper size (for export)
+let currentPaperSize = ref(getPaperSize("A4"))
+
+// Get current paper size (for export)
+let getCurrentPaperSize = () => currentPaperSize.contents
+
 // Create a plotter-framed sketch
 let createPlotterSketch = (drawFn: drawFn) => {
   () => {
     (p: P5.t) => {
-      // Current paper size state
-      let currentSize = ref(getPaperSize("A4"))
+      // Use shared paper size state
+      let currentSize = currentPaperSize
 
       // Function to update canvas size
       let updateCanvasSize = () => {
@@ -113,78 +119,6 @@ let createPlotterSketch = (drawFn: drawFn) => {
         }
       }
 
-      // Helper to get current timestamp as ISO8601 filename
-      let getTimestampFilename = (extension: string): string => {
-        let date = %raw(`new Date()`)
-        let timestamp = %raw(`(d) => d.toISOString()`)(date)
-        `${timestamp}.${extension}`
-      }
-
-      // Function to export canvas as PNG
-      let exportPNG = () => {
-        let canvas = p->P5.canvas
-        let dataUrl = canvas->toDataURL("image/png", 1.0)
-
-        let link = createElement("a")
-        link->setHref(dataUrl)
-        link->setDownload(getTimestampFilename("png"))
-        let linkStyle = link->style
-        linkStyle["display"] = "none"
-
-        body->appendChild(link)
-        link->click
-        body->removeChild(link)
-      }
-
-      // Function to export canvas as SVG (basic implementation)
-      let exportSVG = () => {
-        // Create SVG representation
-        let svgWidth = currentSize.contents.widthMm
-        let svgHeight = currentSize.contents.heightMm
-
-        let svgHeader = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${svgWidth->Float.toString}mm" height="${svgHeight->Float.toString}mm" viewBox="0 0 ${currentSize.contents.width->Int.toString} ${currentSize.contents.height->Int.toString}">
-  <rect width="100%" height="100%" fill="white"/>
-  <g stroke="black" fill="none">`
-
-        let svgFooter = `  </g>
-</svg>`
-
-        // Note: This is a basic SVG export. Real implementation would capture actual drawing commands.
-        let svgContent = svgHeader ++ svgFooter
-
-        // Create blob and download
-        let blob = %raw(`(content) => new Blob([content], {type: 'image/svg+xml'})`)(svgContent)
-        let url = %raw(`(b) => URL.createObjectURL(b)`)(blob)
-
-        let link = createElement("a")
-        link->setHref(url)
-        link->setDownload(getTimestampFilename("svg"))
-        let linkStyle = link->style
-        linkStyle["display"] = "none"
-
-        body->appendChild(link)
-        link->click
-        body->removeChild(link)
-
-        %raw(`(u) => URL.revokeObjectURL(u)`)(url)
-      }
-
-      // Function to handle export button click
-      let handleExport = () => {
-        let formatSelect = getElementById("export-format")
-        switch formatSelect->Js.Nullable.toOption {
-        | Some(element) => {
-            let format = element->value
-            if format == "png" {
-              exportPNG()
-            } else if format == "svg" {
-              exportSVG()
-            }
-          }
-        | None => ()
-        }
-      }
 
       // Setup - called once at the start
       p->P5.setSetup(() => {
@@ -203,13 +137,6 @@ let createPlotterSketch = (drawFn: drawFn) => {
         let applyBtn = getElementById("apply-custom")
         switch applyBtn->Js.Nullable.toOption {
         | Some(element) => element->addEventListener("click", applyCustomSize)
-        | None => ()
-        }
-
-        // Add event listener to export button
-        let exportBtn = getElementById("export-btn")
-        switch exportBtn->Js.Nullable.toOption {
-        | Some(element) => element->addEventListener("click", handleExport)
         | None => ()
         }
       })

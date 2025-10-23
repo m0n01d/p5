@@ -70,12 +70,17 @@ function customPaperSize(widthMm, heightMm) {
         };
 }
 
+var currentPaperSize = {
+  contents: getPaperSize("A4")
+};
+
+function getCurrentPaperSize() {
+  return currentPaperSize.contents;
+}
+
 function createPlotterSketch(drawFn) {
   return function () {
     return function (p) {
-      var currentSize = {
-        contents: getPaperSize("A4")
-      };
       var updateCanvasSize = function () {
         var selector = document.getElementById("paper-size");
         if (selector == null) {
@@ -91,8 +96,8 @@ function createPlotterSketch(drawFn) {
           divStyle.display = "flex";
         } else {
           divStyle.display = "none";
-          currentSize.contents = getPaperSize(size);
-          p.resizeCanvas(currentSize.contents.width, currentSize.contents.height);
+          currentPaperSize.contents = getPaperSize(size);
+          p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
           p.background(255);
         }
       };
@@ -107,60 +112,12 @@ function createPlotterSketch(drawFn) {
         }
         var widthMm = Core__Option.getOr(Core__Float.fromString(widthInput.value), 210.0);
         var heightMm = Core__Option.getOr(Core__Float.fromString(heightInput.value), 297.0);
-        currentSize.contents = customPaperSize(widthMm, heightMm);
-        p.resizeCanvas(currentSize.contents.width, currentSize.contents.height);
+        currentPaperSize.contents = customPaperSize(widthMm, heightMm);
+        p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
         p.background(255);
       };
-      var getTimestampFilename = function (extension) {
-        var date = (new Date());
-        var timestamp = ((d) => d.toISOString())(date);
-        return timestamp + "." + extension;
-      };
-      var exportPNG = function () {
-        var canvas = p.canvas;
-        var dataUrl = canvas.toDataURL("image/png", 1.0);
-        var link = document.createElement("a");
-        link.href = dataUrl;
-        link.download = getTimestampFilename("png");
-        var linkStyle = link.style;
-        linkStyle.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      };
-      var exportSVG = function () {
-        var svgWidth = currentSize.contents.widthMm;
-        var svgHeight = currentSize.contents.heightMm;
-        var svgHeader = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + svgWidth.toString() + "mm\" height=\"" + svgHeight.toString() + "mm\" viewBox=\"0 0 " + currentSize.contents.width.toString() + " " + currentSize.contents.height.toString() + "\">\n  <rect width=\"100%\" height=\"100%\" fill=\"white\"/>\n  <g stroke=\"black\" fill=\"none\">";
-        var svgContent = svgHeader + "  </g>\n</svg>";
-        var blob = ((content) => new Blob([content], {type: 'image/svg+xml'}))(svgContent);
-        var url = ((b) => URL.createObjectURL(b))(blob);
-        var link = document.createElement("a");
-        link.href = url;
-        link.download = getTimestampFilename("svg");
-        var linkStyle = link.style;
-        linkStyle.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        return ((u) => URL.revokeObjectURL(u))(url);
-      };
-      var handleExport = function () {
-        var formatSelect = document.getElementById("export-format");
-        if (formatSelect == null) {
-          return ;
-        }
-        var format = formatSelect.value;
-        if (format === "png") {
-          return exportPNG();
-        } else if (format === "svg") {
-          return exportSVG();
-        } else {
-          return ;
-        }
-      };
       p.setup = (function () {
-          p.createCanvas(currentSize.contents.width, currentSize.contents.height);
+          p.createCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
           p.background(255);
           var selector = document.getElementById("paper-size");
           if (!(selector == null)) {
@@ -169,10 +126,6 @@ function createPlotterSketch(drawFn) {
           var applyBtn = document.getElementById("apply-custom");
           if (!(applyBtn == null)) {
             applyBtn.addEventListener("click", applyCustomSize);
-          }
-          var exportBtn = document.getElementById("export-btn");
-          if (!(exportBtn == null)) {
-            exportBtn.addEventListener("click", handleExport);
             return ;
           }
           
@@ -182,8 +135,8 @@ function createPlotterSketch(drawFn) {
           p.noFill();
           p.stroke(0);
           p.strokeWeight(2);
-          p.rect(10.0, 10.0, currentSize.contents.width - 20 | 0, currentSize.contents.height - 20 | 0);
-          drawFn(p, currentSize.contents);
+          p.rect(10.0, 10.0, currentPaperSize.contents.width - 20 | 0, currentPaperSize.contents.height - 20 | 0);
+          drawFn(p, currentPaperSize.contents);
         });
     };
   };
@@ -193,6 +146,8 @@ export {
   mmToPixels ,
   getPaperSize ,
   customPaperSize ,
+  currentPaperSize ,
+  getCurrentPaperSize ,
   createPlotterSketch ,
 }
-/* No side effect */
+/* currentPaperSize Not a pure module */
