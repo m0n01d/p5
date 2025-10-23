@@ -146,15 +146,16 @@ let createPlotterSketch = (drawFn: drawFn) => {
         // White background for paper
         p->P5.background(255)
 
-        // Draw a border to show paper edge
+        // Draw a margin border (40px = ~10mm at 96 DPI) for plotter safe area
+        let margin = 40.0
         p->P5.noFill
-        p->P5.stroke(0)
-        p->P5.strokeWeight(2)
+        p->P5.stroke(200) // Light gray to show margin
+        p->P5.strokeWeight(1)
         p->P5.rect(
-          10.0,
-          10.0,
-          (currentSize.contents.width - 20)->Int.toFloat,
-          (currentSize.contents.height - 20)->Int.toFloat,
+          margin,
+          margin,
+          (currentSize.contents.width->Int.toFloat -. margin *. 2.0),
+          (currentSize.contents.height->Int.toFloat -. margin *. 2.0),
         )
 
         // Call the custom draw function with current paper size

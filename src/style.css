@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+canvas {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Dynamically created sketch selector styles */
+#sketch-controls .sketch-label {
+  @apply text-sm text-zinc-300;
+}
+
+#sketch-controls .sketch-selector,
+#sketch-controls select {
+  @apply px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500;
+  min-width: 250px;
+}
+
+/* Sketch-specific controls (dynamically created by ReScript) */
+#sketch-specific-controls .controls {
+  @apply space-y-4;
+}
+
+#sketch-specific-controls label {
+  @apply block text-sm text-zinc-300 mb-1;
+}
+
+#sketch-specific-controls input[type="number"] {
+  @apply w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm;
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500;
+}
+
+#sketch-specific-controls button {
+  @apply w-full mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-md text-white text-sm font-medium transition-colors;
+}

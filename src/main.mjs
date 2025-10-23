@@ -1,6 +1,9 @@
 // Entry point for Vite bundler
 console.log('Initializing sketches with lazy loading...');
 
+// Import Tailwind CSS
+import './style.css';
+
 // Import only the sketch manager
 import { registerSketch, init } from './SketchManager.res.mjs';
 

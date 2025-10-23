@@ -133,9 +133,9 @@ function createPlotterSketch(drawFn) {
       p.draw = (function () {
           p.background(255);
           p.noFill();
-          p.stroke(0);
-          p.strokeWeight(2);
-          p.rect(10.0, 10.0, currentPaperSize.contents.width - 20 | 0, currentPaperSize.contents.height - 20 | 0);
+          p.stroke(200);
+          p.strokeWeight(1);
+          p.rect(40.0, 40.0, currentPaperSize.contents.width - 40.0 * 2.0, currentPaperSize.contents.height - 40.0 * 2.0);
           drawFn(p, currentPaperSize.contents);
         });
     };
