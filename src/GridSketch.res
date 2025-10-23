@@ -22,11 +22,13 @@ external addEventListener: (Dom.element, string, unit => unit) => unit = "addEve
 type gridState = {
   shapeType: int,
   shapeSize: float,
+  rotation: float,
 }
 
 let state = ref({
   shapeType: 4, // square
   shapeSize: 30.0,
+  rotation: 1.0, // rotation multiplier (1.0 = 360° at bottom-right)
 })
 
 // Create controls for this sketch
@@ -67,7 +69,11 @@ let createControls = () => {
 
       shapeSelect->addEventListener("change", () => {
         let value = shapeSelect->value
-        let sides = shapes->Array.find(((v, _, _)) => v == value)->Option.map(((_, _, s)) => s)->Option.getOr(4)
+        let sides =
+          shapes
+          ->Array.find(((v, _, _)) => v == value)
+          ->Option.map(((_, _, s)) => s)
+          ->Option.getOr(4)
         state := {...state.contents, shapeType: sides}
       })
 
@@ -94,27 +100,48 @@ let createControls = () => {
 
       container->appendChild(sizeInput)
 
+      // Rotation multiplier input
+      let rotationLabel = createElement("label")
+      rotationLabel->setTextContent(" Rotation: ")
+      rotationLabel->setAttribute("for", "rotation-multiplier")
+      container->appendChild(rotationLabel)
+
+      let rotationInput = createElement("input")
+      rotationInput->setAttribute("type", "number")
+      rotationInput->setAttribute("id", "rotation-multiplier")
+      rotationInput->setValue("1.0")
+      rotationInput->setAttribute("min", "0")
+      rotationInput->setAttribute("max", "10")
+      rotationInput->setAttribute("step", "0.1")
+
+      rotationInput->addEventListener("input", () => {
+        let value = rotationInput->value->Float.fromString->Option.getOr(1.0)
+        state := {...state.contents, rotation: value}
+      })
+
+      container->appendChild(rotationInput)
+
       Console.log("Grid controls created")
     }
   }
 }
 
-// Draw a polygon with n sides
-let drawPolygon = (p: P5.t, x: float, y: float, radius: float, sides: int) => {
+// Draw a polygon with n sides and rotation
+let drawPolygon = (p: P5.t, x: float, y: float, radius: float, sides: int, rotation: float) => {
   p->P5.noFill
   p->P5.stroke(0)
   p->P5.strokeWeight(1)
 
   if sides == 0 {
-    // Circle
+    // Circle (rotation doesn't affect circles)
     p->P5.circle(x, y, radius *. 2.0)
   } else {
     // Regular polygon
     let angle = 2.0 *. Js.Math._PI /. float_of_int(sides)
 
-    // Calculate vertices
+    // Calculate vertices with rotation applied
     let vertices = Array.make(~length=sides, (0.0, 0.0))->Array.mapWithIndex((_, i) => {
-      let a = float_of_int(i) *. angle -. Js.Math._PI /. 2.0
+      let a = float_of_int(i) *. angle -. Js.Math._PI /. 2.0 +. rotation
       let vx = x +. Js.Math.cos(a) *. radius
       let vy = y +. Js.Math.sin(a) *. radius
       (vx, vy)
@@ -134,6 +161,7 @@ let draw = (p: P5.t, paperSize: PlotterFrame.paperSize) => {
   // Get shape parameters from state
   let sides = state.contents.shapeType
   let shapeSize = state.contents.shapeSize
+  let rotationMultiplier = state.contents.rotation
 
   // Calculate grid layout
   let margin = 20.0
@@ -150,6 +178,9 @@ let draw = (p: P5.t, paperSize: PlotterFrame.paperSize) => {
   let startX = (paperSize.width->Int.toFloat -. actualWidth) /. 2.0
   let startY = (paperSize.height->Int.toFloat -. actualHeight) /. 2.0
 
+  // Total number of cells for rotation calculation
+  let totalCells = numCols * numRows
+
   // Draw the grid
   for row in 0 to numRows - 1 {
     for col in 0 to numCols - 1 {
@@ -157,27 +188,33 @@ let draw = (p: P5.t, paperSize: PlotterFrame.paperSize) => {
       let y = startY +. float_of_int(row) *. shapeSize +. shapeSize /. 2.0
       let radius = shapeSize /. 2.0
 
-      drawPolygon(p, x, y, radius, sides)
+      // Calculate rotation based on position
+      // Progress from 0 (top-left) to 1 (bottom-right)
+      let cellIndex = row * numCols + col
+      let progress = float_of_int(cellIndex) /. float_of_int(totalCells)
+      let rotation = progress *. rotationMultiplier *. 2.0 *. Js.Math._PI // Convert to radians
+
+      drawPolygon(p, x, y, radius, sides, rotation)
     }
   }
 
   // Draw info text in bottom margin
-  p->P5.noStroke
-  p->P5.fill(0)
-  let shapeName = switch sides {
-  | 0 => "circles"
-  | 3 => "triangles"
-  | 4 => "squares"
-  | 5 => "pentagons"
-  | 6 => "hexagons"
-  | 8 => "octagons"
-  | _ => "shapes"
-  }
+  // p->P5.noStroke
+  // p->P5.fill(0)
+  // let shapeName = switch sides {
+  // | 0 => "circles"
+  // | 3 => "triangles"
+  // | 4 => "squares"
+  // | 5 => "pentagons"
+  // | 6 => "hexagons"
+  // | 8 => "octagons"
+  // | _ => "shapes"
+  // }
 
-  let info = `${numCols->Int.toString} × ${numRows->Int.toString} ${shapeName} (${shapeSize->Float.toString}px each)`
-  %raw(`(function(p) { p.textSize(10); })`)(p)
-  %raw(`(function(p) { p.textAlign(p.CENTER); })`)(p)
-  %raw(`(function(p, info) { p.text(info, p.width / 2, p.height - 5); })`)(p, info)
+  // let info = `${numCols->Int.toString} × ${numRows->Int.toString} ${shapeName} (${shapeSize->Float.toString}px each)`
+  // %raw(`(function(p) { p.textSize(10); })`)(p)
+  // %raw(`(function(p) { p.textAlign(p.CENTER); })`)(p)
+  // %raw(`(function(p, info) { p.text(info, p.width / 2, p.height - 5); })`)(p, info)
 }
 
 // Create the sketch - initialize controls when sketch loads

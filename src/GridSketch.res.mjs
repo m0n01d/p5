@@ -8,7 +8,8 @@ import * as PlotterFrame from "./PlotterFrame.res.mjs";
 var state = {
   contents: {
     shapeType: 4,
-    shapeSize: 30.0
+    shapeSize: 30.0,
+    rotation: 1.0
   }
 };
 
@@ -74,7 +75,8 @@ function createControls() {
           var init = state.contents;
           state.contents = {
             shapeType: sides,
-            shapeSize: init.shapeSize
+            shapeSize: init.shapeSize,
+            rotation: init.rotation
           };
         }));
   controlsDiv.appendChild(shapeSelect);
@@ -94,14 +96,36 @@ function createControls() {
           var init = state.contents;
           state.contents = {
             shapeType: init.shapeType,
-            shapeSize: value
+            shapeSize: value,
+            rotation: init.rotation
           };
         }));
   controlsDiv.appendChild(sizeInput);
+  var rotationLabel = document.createElement("label");
+  rotationLabel.textContent = " Rotation: ";
+  rotationLabel.setAttribute("for", "rotation-multiplier");
+  controlsDiv.appendChild(rotationLabel);
+  var rotationInput = document.createElement("input");
+  rotationInput.setAttribute("type", "number");
+  rotationInput.setAttribute("id", "rotation-multiplier");
+  rotationInput.value = "1.0";
+  rotationInput.setAttribute("min", "0");
+  rotationInput.setAttribute("max", "10");
+  rotationInput.setAttribute("step", "0.1");
+  rotationInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(rotationInput.value), 1.0);
+          var init = state.contents;
+          state.contents = {
+            shapeType: init.shapeType,
+            shapeSize: init.shapeSize,
+            rotation: value
+          };
+        }));
+  controlsDiv.appendChild(rotationInput);
   console.log("Grid controls created");
 }
 
-function drawPolygon(p, x, y, radius, sides) {
+function drawPolygon(p, x, y, radius, sides, rotation) {
   p.noFill();
   p.stroke(0);
   p.strokeWeight(1);
@@ -114,7 +138,7 @@ function drawPolygon(p, x, y, radius, sides) {
           0.0,
           0.0
         ]).map(function (param, i) {
-        var a = i * angle - Math.PI / 2.0;
+        var a = i * angle - Math.PI / 2.0 + rotation;
         var vx = x + Math.cos(a) * radius;
         var vy = y + Math.sin(a) * radius;
         return [
@@ -132,6 +156,7 @@ function drawPolygon(p, x, y, radius, sides) {
 function draw(p, paperSize) {
   var sides = state.contents.shapeType;
   var shapeSize = state.contents.shapeSize;
+  var rotationMultiplier = state.contents.rotation;
   var availableWidth = paperSize.width - 20.0 * 2.0;
   var availableHeight = paperSize.height - 20.0 * 2.0;
   var numCols = availableWidth / shapeSize | 0;
@@ -140,43 +165,18 @@ function draw(p, paperSize) {
   var actualHeight = numRows * shapeSize;
   var startX = (paperSize.width - actualWidth) / 2.0;
   var startY = (paperSize.height - actualHeight) / 2.0;
+  var totalCells = Math.imul(numCols, numRows);
   for(var row = 0; row < numRows; ++row){
     for(var col = 0; col < numCols; ++col){
       var x = startX + col * shapeSize + shapeSize / 2.0;
       var y = startY + row * shapeSize + shapeSize / 2.0;
       var radius = shapeSize / 2.0;
-      drawPolygon(p, x, y, radius, sides);
+      var cellIndex = Math.imul(row, numCols) + col | 0;
+      var progress = cellIndex / totalCells;
+      var rotation = progress * rotationMultiplier * 2.0 * Math.PI;
+      drawPolygon(p, x, y, radius, sides, rotation);
     }
   }
-  p.noStroke();
-  p.fill(0);
-  var shapeName;
-  switch (sides) {
-    case 0 :
-        shapeName = "circles";
-        break;
-    case 3 :
-        shapeName = "triangles";
-        break;
-    case 4 :
-        shapeName = "squares";
-        break;
-    case 5 :
-        shapeName = "pentagons";
-        break;
-    case 6 :
-        shapeName = "hexagons";
-        break;
-    case 8 :
-        shapeName = "octagons";
-        break;
-    default:
-      shapeName = "shapes";
-  }
-  var info = numCols.toString() + " × " + numRows.toString() + " " + shapeName + " (" + shapeSize.toString() + "px each)";
-  (((function(p) { p.textSize(10); }))(p));
-  (((function(p) { p.textAlign(p.CENTER); }))(p));
-  return ((function(p, info) { p.text(info, p.width / 2, p.height - 5); }))(p, info);
 }
 
 function createSketch() {
