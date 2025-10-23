@@ -13,9 +13,7 @@
     }
   ],
   "suffix": ".res.js",
-  "bs-dependencies": [
-    "@rescript/core"
-  ],
+  "bs-dependencies": [],
   "warnings": {
     "error": "+101"
   }

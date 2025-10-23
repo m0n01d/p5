@@ -29,7 +29,7 @@ let sketch = (p: P5.t) => {
     p->P5.circle(400.0, 300.0, 100.0)
 
     // Draw animated circles
-    let time = p->P5.frameCount->Belt.Int.toFloat
+    let time = p->P5.frameCount->float_of_int
     let x = 400.0 +. Js.Math.cos(time *. 0.05) *. 200.0
     let y = 300.0 +. Js.Math.sin(time *. 0.05) *. 200.0
 
