@@ -38,8 +38,8 @@ let sketch = (p: P5.t) => {
   })
 }
 
-// Access global p5 constructor
-@val external p5: 'a = "p5"
+// Access global p5 constructor from window
+@val @scope("window") external p5: 'a = "p5"
 
 // Create the sketch instance using global p5
-let _ = %raw("new p5(sketch)")
+let _ = %raw("new window.p5(sketch)")

@@ -21,7 +21,7 @@ function sketch(p) {
     });
 }
 
-((new p5(sketch)));
+((new window.p5(sketch)));
 
 export {
   sketch ,
