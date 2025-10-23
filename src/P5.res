@@ -5,6 +5,7 @@ type t
 
 // Import p5 constructor from npm package
 @module("p5") @new external make: (t => unit) => t = "default"
+@module("p5") @new external makeWithParent: (t => unit, string) => t = "default"
 
 // Core drawing functions
 @send external background: (t, int) => unit = "background"
@@ -56,3 +57,11 @@ type t
 // Canvas export functions
 @send external saveCanvas: (t, string, string) => unit = "saveCanvas"
 @get external canvas: t => Dom.element = "canvas"
+
+// Sketch lifecycle functions
+@set external setSetup: (t, unit => unit) => unit = "setup"
+@set external setDraw: (t, unit => unit) => unit = "draw"
+@set external setMousePressed: (t, unit => unit) => unit = "mousePressed"
+
+// Frame rate control
+@send external frameRate: (t, float) => unit = "frameRate"

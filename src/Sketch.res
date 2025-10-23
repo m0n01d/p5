@@ -67,8 +67,9 @@ external createElement: string => Dom.element = "createElement"
 // For custom size inputs
 @send external parseFloat: string => float = "parseFloat"
 
-// Sketch function that defines setup and draw
-let sketch = (p: P5.t) => {
+// Main plotter sketch
+let createSketch = () => {
+  (p: P5.t) => {
   // Current paper size state
   let currentSize = ref(getPaperSize("A4"))
 
@@ -107,8 +108,8 @@ let sketch = (p: P5.t) => {
 
     switch (widthInput->Js.Nullable.toOption, heightInput->Js.Nullable.toOption) {
     | (Some(wInput), Some(hInput)) => {
-        let widthMm = wInput->value->Float.fromString->Option.getWithDefault(210.0)
-        let heightMm = hInput->value->Float.fromString->Option.getWithDefault(297.0)
+        let widthMm = wInput->value->Float.fromString->Option.getOr(210.0)
+        let heightMm = hInput->value->Float.fromString->Option.getOr(297.0)
         currentSize := customPaperSize(widthMm, heightMm)
         p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
         p->P5.background(255)
@@ -278,7 +279,5 @@ let sketch = (p: P5.t) => {
       p->P5.circle(p->P5.mouseX, p->P5.mouseY, 20.0)
     }
   })
+  }
 }
-
-// Create p5 instance using the imported p5 constructor
-let _ = P5.make(sketch)
