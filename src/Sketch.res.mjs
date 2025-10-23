@@ -110,12 +110,17 @@ function sketch(p) {
     p.resizeCanvas(currentSize.contents.width, currentSize.contents.height);
     p.background(255);
   };
+  var getTimestampFilename = function (extension) {
+    var date = (new Date());
+    var timestamp = ((d) => d.toISOString())(date);
+    return timestamp + "." + extension;
+  };
   var exportPNG = function () {
     var canvas = p.canvas;
     var dataUrl = canvas.toDataURL("image/png", 1.0);
     var link = document.createElement("a");
     link.href = dataUrl;
-    link.download = "plotter-art.png";
+    link.download = getTimestampFilename("png");
     var linkStyle = link.style;
     linkStyle.display = "none";
     document.body.appendChild(link);
@@ -140,7 +145,7 @@ function sketch(p) {
     var url = ((b) => URL.createObjectURL(b))(blob);
     var link = document.createElement("a");
     link.href = url;
-    link.download = "plotter-art.svg";
+    link.download = getTimestampFilename("svg");
     var linkStyle = link.style;
     linkStyle.display = "none";
     document.body.appendChild(link);
@@ -163,8 +168,8 @@ function sketch(p) {
     }
   };
   p.setup = (function () {
-      p.createCanvas(currentSize.contents.width, currentSize.contents.height);
-      p.background(255);
+      var canvas = p.createCanvas(currentSize.contents.width, currentSize.contents.height);
+      canvas.parent("sketch").background(255);
       var selector = document.getElementById("paper-size");
       if (!(selector == null)) {
         selector.addEventListener("change", updateCanvasSize);

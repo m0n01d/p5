@@ -27,7 +27,8 @@ type t
 @send external triangle: (t, float, float, float, float, float, float) => unit = "triangle"
 
 // Canvas functions
-@send external createCanvas: (t, int, int) => unit = "createCanvas"
+@send external createCanvas: (t, int, int) => t = "createCanvas"
+@send external parent: (t, string) => t = "parent"
 @send external resizeCanvas: (t, int, int) => unit = "resizeCanvas"
 
 // Math functions

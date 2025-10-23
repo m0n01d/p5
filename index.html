@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>P5.js + ReScript</title>
+    <title>replot</title>
     <style>
       body {
         margin: 0;
@@ -101,7 +101,9 @@
   </head>
   <body>
     <main>
-      <h1>Pen Plotter - P5.js + ReScript</h1>
+      <h1>replot</h1>
+
+      <div id="sketch"></div>
       <div class="controls">
         <label for="paper-size">Paper Size:</label>
         <select id="paper-size">
@@ -147,7 +149,6 @@
           <button id="export-btn">Download</button>
         </div>
       </div>
-      <div id="sketch-container"></div>
     </main>
 
     <!-- Vite will bundle everything including p5 and the sketch -->

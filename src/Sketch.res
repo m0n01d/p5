@@ -117,6 +117,13 @@ let sketch = (p: P5.t) => {
     }
   }
 
+  // Helper to get current timestamp as ISO8601 filename
+  let getTimestampFilename = (extension: string): string => {
+    let date = %raw(`new Date()`)
+    let timestamp = %raw(`(d) => d.toISOString()`)(date)
+    `${timestamp}.${extension}`
+  }
+
   // Function to export canvas as PNG
   let exportPNG = () => {
     let canvas = p->P5.canvas
@@ -124,7 +131,7 @@ let sketch = (p: P5.t) => {
 
     let link = createElement("a")
     link->setHref(dataUrl)
-    link->setDownload("plotter-art.png")
+    link->setDownload(getTimestampFilename("png"))
     let linkStyle = link->style
     linkStyle["display"] = "none"
 
@@ -175,7 +182,7 @@ let sketch = (p: P5.t) => {
 
     let link = createElement("a")
     link->setHref(url)
-    link->setDownload("plotter-art.svg")
+    link->setDownload(getTimestampFilename("svg"))
     let linkStyle = link->style
     linkStyle["display"] = "none"
 
@@ -204,8 +211,10 @@ let sketch = (p: P5.t) => {
 
   // Setup - called once at the start
   p->setSetup(() => {
-    p->P5.createCanvas(currentSize.contents.width, currentSize.contents.height)
-    p->P5.background(255) // White background for paper
+    let canvas = p->P5.createCanvas(currentSize.contents.width, currentSize.contents.height)
+    canvas
+    ->P5.parent("sketch")
+    ->P5.background(255) // White background for paper
 
     // Add event listener to paper size selector
     let selector = getElementById("paper-size")
