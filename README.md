@@ -22,41 +22,38 @@ npm install
 
 ## Development
 
-### Build the Project
+### Quick Start
 
-Compile ReScript code to JavaScript:
-
-```bash
-npm run build
-```
-
-### Watch Mode
-
-Automatically rebuild on file changes:
+Start the development server with hot reload:
 
 ```bash
 npm run dev
 ```
 
-### Clean Build Artifacts
+This will:
+- Start a local server at `http://localhost:3000`
+- Watch for ReScript file changes and auto-compile
+- Automatically reload the browser when files change
+
+### Other Commands
+
+Build the project once:
+
+```bash
+npm run build
+```
+
+Watch mode only (no server):
+
+```bash
+npm run watch
+```
+
+Clean build artifacts:
 
 ```bash
 npm run clean
 ```
-
-## Running the Project
-
-1. Build the project: `npm run build`
-2. Open `index.html` in a web browser
-3. For local development, use a local server:
-   ```bash
-   # Using Python 3
-   python -m http.server 8000
-
-   # Using Node.js http-server
-   npx http-server
-   ```
-4. Navigate to `http://localhost:8000` in your browser
 
 ## Project Structure
 

@@ -5,13 +5,20 @@
   "scripts": {
     "build": "rescript",
     "clean": "rescript clean",
-    "dev": "rescript build -w"
+    "watch": "rescript build -w",
+    "serve": "browser-sync start --server --files 'src/**/*.js, index.html' --no-notify --no-open",
+    "dev": "concurrently \"npm run watch\" \"npm run serve\""
   },
-  "keywords": ["p5js", "rescript"],
+  "keywords": [
+    "p5js",
+    "rescript"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
     "@rescript/core": "^1.6.1",
+    "browser-sync": "^3.0.4",
+    "concurrently": "^9.2.1",
     "rescript": "^11.1.4"
   },
   "dependencies": {
