@@ -70,5 +70,10 @@ type t
 // Frame rate control
 @send external frameRate: (t, float) => unit = "frameRate"
 
+// Transform functions
+@send external push: t => unit = "push"
+@send external pop: t => unit = "pop"
+@send external translate: (t, float, float) => unit = "translate"
+
 // Text functions (accessed via raw for now)
 // We use %raw for text functions to avoid complex bindings

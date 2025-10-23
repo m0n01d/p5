@@ -136,7 +136,20 @@ function createPlotterSketch(drawFn) {
           p.stroke(200);
           p.strokeWeight(1);
           p.rect(40.0, 40.0, currentPaperSize.contents.width - 40.0 * 2.0, currentPaperSize.contents.height - 40.0 * 2.0);
-          drawFn(p, currentPaperSize.contents);
+          var marginedSize_width = currentPaperSize.contents.width - (40.0 * 2.0 | 0) | 0;
+          var marginedSize_height = currentPaperSize.contents.height - (40.0 * 2.0 | 0) | 0;
+          var marginedSize_widthMm = currentPaperSize.contents.widthMm - 40.0 * 2.0 / 3.7795275591;
+          var marginedSize_heightMm = currentPaperSize.contents.heightMm - 40.0 * 2.0 / 3.7795275591;
+          var marginedSize = {
+            width: marginedSize_width,
+            height: marginedSize_height,
+            widthMm: marginedSize_widthMm,
+            heightMm: marginedSize_heightMm
+          };
+          p.push();
+          p.translate(40.0, 40.0);
+          drawFn(p, marginedSize);
+          p.pop();
         });
     };
   };

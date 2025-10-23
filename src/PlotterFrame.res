@@ -158,8 +158,22 @@ let createPlotterSketch = (drawFn: drawFn) => {
           (currentSize.contents.height->Int.toFloat -. margin *. 2.0),
         )
 
-        // Call the custom draw function with current paper size
-        drawFn(p, currentSize.contents)
+        // Create a reduced paper size that accounts for margins
+        let marginedSize = {
+          width: currentSize.contents.width - (margin *. 2.0)->Float.toInt,
+          height: currentSize.contents.height - (margin *. 2.0)->Float.toInt,
+          widthMm: currentSize.contents.widthMm -. (margin *. 2.0 /. 3.7795275591),
+          heightMm: currentSize.contents.heightMm -. (margin *. 2.0 /. 3.7795275591),
+        }
+
+        // Push transform to offset drawing into the margin area
+        p->P5.push
+        p->P5.translate(margin, margin)
+
+        // Call the custom draw function with margined paper size
+        drawFn(p, marginedSize)
+
+        p->P5.pop
       })
     }
   }
