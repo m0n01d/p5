@@ -65,3 +65,6 @@ type t
 
 // Frame rate control
 @send external frameRate: (t, float) => unit = "frameRate"
+
+// Text functions (accessed via raw for now)
+// We use %raw for text functions to avoid complex bindings
