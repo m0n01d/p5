@@ -4,11 +4,13 @@
 let numLinesRef = ref(12)
 let amplitudeRef = ref(20.0)
 let gapSizeRef = ref(0.33) // Middle gap as fraction of height (0.33 = 1/3)
+let frequencyRef = ref(4.0) // Number of complete waves across the width
 
 let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
   let numLines = numLinesRef.contents
   let amplitude = amplitudeRef.contents
   let gapSize = gapSizeRef.contents
+  let frequency = frequencyRef.contents
 
   // Calculate center position
   let centerX = paper.width->Int.toFloat /. 2.0
@@ -49,7 +51,6 @@ let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
       let x = t *. paper.width->Int.toFloat
 
       // Calculate sine wave offset
-      let frequency = 4.0  // Number of complete waves across the width
       let sineWave = Js.Math.sin(t *. frequency *. 2.0 *. Js.Math._PI)
 
       // Base wave offset (vertical displacement from the line)
@@ -189,6 +190,34 @@ let createControls = () => {
         let value = gapInput->value->Float.fromString->Option.getOr(33.0)
         gapSizeRef := value /. 100.0  // Convert percentage to fraction
         gapValue->setTextContent(value->Float.toString ++ "%")
+      })
+
+      // Frequency control
+      let freqLabel = createElement("label")
+      freqLabel->setTextContent("Wave Frequency")
+      freqLabel->setAttribute("for", "frequency")
+      freqLabel->setClassName("block text-sm font-medium text-zinc-300 mb-1 mt-4")
+      element->appendChild(freqLabel)
+
+      let freqInput = createElement("input")
+      freqInput->setAttribute("type", "range")
+      freqInput->setAttribute("id", "frequency")
+      freqInput->setAttribute("min", "1")
+      freqInput->setAttribute("max", "20")
+      freqInput->setAttribute("value", "4")
+      freqInput->setClassName("w-full")
+      element->appendChild(freqInput)
+
+      let freqValue = createElement("div")
+      freqValue->setAttribute("id", "frequency-value")
+      freqValue->setTextContent("4")
+      freqValue->setClassName("text-sm text-zinc-400")
+      element->appendChild(freqValue)
+
+      freqInput->addEventListener("input", () => {
+        let value = freqInput->value->Float.fromString->Option.getOr(4.0)
+        frequencyRef := value
+        freqValue->setTextContent(value->Float.toString)
       })
 
       Console.log("Wavy lines controls created")

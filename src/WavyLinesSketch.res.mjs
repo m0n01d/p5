@@ -17,10 +17,15 @@ var gapSizeRef = {
   contents: 0.33
 };
 
+var frequencyRef = {
+  contents: 4.0
+};
+
 function draw(p, paper) {
   var numLines = numLinesRef.contents;
   var amplitude = amplitudeRef.contents;
   var gapSize = gapSizeRef.contents;
+  var frequency = frequencyRef.contents;
   var centerX = paper.width / 2.0;
   var centerY = paper.height / 2.0;
   var gapHeight = paper.height * gapSize;
@@ -38,7 +43,7 @@ function draw(p, paper) {
     for(var step = 0; step <= 200; ++step){
       var t = step / 200;
       var x = t * paper.width;
-      var sineWave = Math.sin(t * 4.0 * 2.0 * Math.PI);
+      var sineWave = Math.sin(t * frequency * 2.0 * Math.PI);
       var waveOffset = sineWave * amplitude;
       var dx = centerX - x;
       var dy = centerY - baseY;
@@ -143,6 +148,29 @@ function createControls() {
           gapSizeRef.contents = value / 100.0;
           gapValue.textContent = value.toString() + "%";
         }));
+  var freqLabel = document.createElement("label");
+  freqLabel.textContent = "Wave Frequency";
+  freqLabel.setAttribute("for", "frequency");
+  freqLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-4";
+  container.appendChild(freqLabel);
+  var freqInput = document.createElement("input");
+  freqInput.setAttribute("type", "range");
+  freqInput.setAttribute("id", "frequency");
+  freqInput.setAttribute("min", "1");
+  freqInput.setAttribute("max", "20");
+  freqInput.setAttribute("value", "4");
+  freqInput.className = "w-full";
+  container.appendChild(freqInput);
+  var freqValue = document.createElement("div");
+  freqValue.setAttribute("id", "frequency-value");
+  freqValue.textContent = "4";
+  freqValue.className = "text-sm text-zinc-400";
+  container.appendChild(freqValue);
+  freqInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(freqInput.value), 4.0);
+          frequencyRef.contents = value;
+          freqValue.textContent = value.toString();
+        }));
   console.log("Wavy lines controls created");
 }
 
@@ -155,6 +183,7 @@ export {
   numLinesRef ,
   amplitudeRef ,
   gapSizeRef ,
+  frequencyRef ,
   draw ,
   createControls ,
   createSketch ,
