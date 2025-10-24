@@ -125,6 +125,31 @@ function getCurrentPaperSize() {
   return currentPaperSize.contents;
 }
 
+function scaleCanvasToFit(canvas) {
+  return ((function(canvas) {
+      const container = canvas.parentElement;
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      // Calculate scale to fit both width and height (with some padding)
+      const padding = 0; // No padding, use full container
+      const availableWidth = containerRect.width - padding;
+      const availableHeight = containerRect.height - padding;
+
+      const scaleX = availableWidth / canvasWidth;
+      const scaleY = availableHeight / canvasHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      // Set explicit dimensions to scaled size
+      canvas.style.width = Math.floor(canvasWidth * scale) + 'px';
+      canvas.style.height = Math.floor(canvasHeight * scale) + 'px';
+      canvas.style.display = 'block';
+    }))(canvas);
+}
+
 function createPlotterSketch(drawFn) {
   return function () {
     return function (p) {
@@ -141,12 +166,17 @@ function createPlotterSketch(drawFn) {
         var divStyle = customDiv.style;
         if (size === "Custom") {
           divStyle.display = "flex";
-        } else {
-          divStyle.display = "none";
-          currentPaperSize.contents = getPaperSize(size);
-          p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
-          p.background(255);
+          return ;
         }
+        divStyle.display = "none";
+        currentPaperSize.contents = getPaperSize(size);
+        p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
+        p.background(255);
+        var canvasElement = p.canvas;
+        ((setTimeout(function(canvas) {
+                      canvas.style.removeProperty('width');
+                      canvas.style.removeProperty('height');
+                    }, 100))(canvasElement));
       };
       var applyCustomSize = function () {
         var widthInput = document.getElementById("custom-width");
@@ -162,6 +192,11 @@ function createPlotterSketch(drawFn) {
         currentPaperSize.contents = customPaperSize(widthMm, heightMm);
         p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
         p.background(255);
+        var canvasElement = p.canvas;
+        ((setTimeout(function(canvas) {
+                canvas.style.removeProperty('width');
+                canvas.style.removeProperty('height');
+              }, 100))(canvasElement));
       };
       var createSpacingControls = function () {
         var controlsDiv = document.getElementById("paper-settings-controls");
@@ -212,6 +247,12 @@ function createPlotterSketch(drawFn) {
       p.setup = (function () {
           p.createCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
           p.background(255);
+          var canvasElement = p.canvas;
+          (((function(canvas) {
+            // Remove p5's inline width/height styles
+            canvas.style.removeProperty('width');
+            canvas.style.removeProperty('height');
+          }))(canvasElement));
           createSpacingControls();
           var selector = document.getElementById("paper-size");
           if (!(selector == null)) {
@@ -266,6 +307,7 @@ export {
   currentMarginMm ,
   currentPaddingMm ,
   getCurrentPaperSize ,
+  scaleCanvasToFit ,
   createPlotterSketch ,
 }
 /* currentPaperSize Not a pure module */

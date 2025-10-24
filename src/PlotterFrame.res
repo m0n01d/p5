@@ -88,6 +88,34 @@ let currentPaddingMm = ref(5.0) // Default 5mm padding (additional safe space)
 // Get current paper size (for export)
 let getCurrentPaperSize = () => currentPaperSize.contents
 
+// Scale canvas to fit within container
+let scaleCanvasToFit = (canvas: Dom.element) => {
+  %raw(`
+    (function(canvas) {
+      const container = canvas.parentElement;
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+
+      // Calculate scale to fit both width and height (with some padding)
+      const padding = 0; // No padding, use full container
+      const availableWidth = containerRect.width - padding;
+      const availableHeight = containerRect.height - padding;
+
+      const scaleX = availableWidth / canvasWidth;
+      const scaleY = availableHeight / canvasHeight;
+      const scale = Math.min(scaleX, scaleY);
+
+      // Set explicit dimensions to scaled size
+      canvas.style.width = Math.floor(canvasWidth * scale) + 'px';
+      canvas.style.height = Math.floor(canvasHeight * scale) + 'px';
+      canvas.style.display = 'block';
+    })
+  `)(canvas)
+}
+
 // Create a plotter-framed sketch
 let createPlotterSketch = (drawFn: drawFn) => {
   () => {
@@ -114,6 +142,15 @@ let createPlotterSketch = (drawFn: drawFn) => {
                   currentSize := getPaperSize(size)
                   p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
                   p->P5.background(255)
+
+                  // Remove inline styles after resize
+                  let canvasElement = p->P5.canvas
+                  %raw(`
+                    setTimeout(function(canvas) {
+                      canvas.style.removeProperty('width');
+                      canvas.style.removeProperty('height');
+                    }, 100)
+                  `)(canvasElement)
                 }
               }
             | None => ()
@@ -135,6 +172,15 @@ let createPlotterSketch = (drawFn: drawFn) => {
             currentSize := customPaperSize(widthMm, heightMm)
             p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
             p->P5.background(255)
+
+            // Remove inline styles after resize
+            let canvasElement = p->P5.canvas
+            %raw(`
+              setTimeout(function(canvas) {
+                canvas.style.removeProperty('width');
+                canvas.style.removeProperty('height');
+              }, 100)
+            `)(canvasElement)
           }
         | _ => ()
         }
@@ -206,8 +252,17 @@ let createPlotterSketch = (drawFn: drawFn) => {
       // Setup - called once at the start
       p->P5.setSetup(() => {
         let canvas = p->P5.createCanvas(currentSize.contents.width, currentSize.contents.height)
-        canvas->ignore
         p->P5.background(255) // White background for paper
+
+        // Remove inline width/height styles set by p5 to let CSS handle scaling
+        let canvasElement = p->P5.canvas
+        %raw(`
+          (function(canvas) {
+            // Remove p5's inline width/height styles
+            canvas.style.removeProperty('width');
+            canvas.style.removeProperty('height');
+          })
+        `)(canvasElement)
 
         // Create spacing controls
         createSpacingControls()
