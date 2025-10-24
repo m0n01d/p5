@@ -109,6 +109,12 @@ let switchToSketch = (index: int) => {
 
               // Update state with loaded sketch
               window.__currentP5Instance = p5Instance;
+              //-- @TODO fix
+              // state := {
+              //         ...state.contents,
+              //         currentP5: Some(p5Instance),
+              //         currentIndex: index,
+              //       }
               window.__sketchLoadComplete = true;
             })
             .catch(err => {
@@ -183,63 +189,57 @@ let createSketchSelector = () => {
 
 // Export current sketch
 let exportCurrentSketch = () => {
-  switch state.contents.currentP5 {
-  | None => Console.log("No sketch to export")
-  | Some(p5) => {
-      let formatSelect = getElementById("export-format")
-      switch formatSelect->Js.Nullable.toOption {
-      | None => Console.log("Export format selector not found")
-      | Some(element) => {
-          let format = element->value
-          Console.log(`Exporting current sketch as ${format}`)
+  let p5 = %raw(`window.__currentP5Instance`)
+  let formatSelect = getElementById("export-format")
+  switch formatSelect->Js.Nullable.toOption {
+  | None => Console.log("Export format selector not found")
+  | Some(element) => {
+      let format = element->value
+      Console.log(`Exporting current sketch as ${format}`)
 
-          let canvas = p5->P5.canvas
-          let timestamp = %raw(`new Date().toISOString()`)
-          let filename = `${timestamp}.${format}`
+      let canvas = p5->P5.canvas
+      let timestamp = %raw(`new Date().toISOString()`)
+      let filename = `${timestamp}.${format}`
 
-          if format == "png" {
-            // PNG export
-            let dataUrl = canvas->toDataURL("image/png", 1.0)
-            let link = createElement("a")
-            link->setHref(dataUrl)
-            link->setDownload(filename)
-            let linkStyle = link->style
-            linkStyle["display"] = "none"
-            body->appendChild(link)
-            link->click
-            body->removeChild(link)
-          } else if format == "svg" {
-            // SVG export with embedded canvas image
-            let dataUrl = canvas->toDataURL("image/png", 1.0)
-            let widthPx = p5->P5.width
-            let heightPx = p5->P5.height
+      if format == "png" {
+        // PNG export
+        let dataUrl = canvas->toDataURL("image/png", 1.0)
+        let link = createElement("a")
+        link->setHref(dataUrl)
+        link->setDownload(filename)
+        let linkStyle = link->style
+        linkStyle["display"] = "none"
+        body->appendChild(link)
+        link->click
+        body->removeChild(link)
+      } else if format == "svg" {
+        // SVG export with embedded canvas image
+        let dataUrl = canvas->toDataURL("image/png", 1.0)
+        let widthPx = p5->P5.width
+        let heightPx = p5->P5.height
 
-            // Get paper size in mm for accurate plotting
-            let paperSize = PlotterFrame.getCurrentPaperSize()
-            let widthMm = paperSize.widthMm->Float.toString
-            let heightMm = paperSize.heightMm->Float.toString
+        // Get paper size in mm for accurate plotting
+        let paperSize = PlotterFrame.getCurrentPaperSize()
+        let widthMm = paperSize.widthMm->Float.toString
+        let heightMm = paperSize.heightMm->Float.toString
 
-            let svgContent = `<?xml version="1.0" encoding="UTF-8"?>
+        let svgContent = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
      width="${widthMm}mm" height="${heightMm}mm"
      viewBox="0 0 ${widthPx->Int.toString} ${heightPx->Int.toString}">
   <image width="${widthPx->Int.toString}" height="${heightPx->Int.toString}" xlink:href="${dataUrl}"/>
 </svg>`
-            let blob = %raw(`(content) => new Blob([content], {type: 'image/svg+xml'})`)(
-              svgContent,
-            )
-            let url = %raw(`(b) => URL.createObjectURL(b)`)(blob)
-            let link = createElement("a")
-            link->setHref(url)
-            link->setDownload(filename)
-            let linkStyle = link->style
-            linkStyle["display"] = "none"
-            body->appendChild(link)
-            link->click
-            body->removeChild(link)
-            %raw(`(u) => URL.revokeObjectURL(u)`)(url)
-          }
-        }
+        let blob = %raw(`(content) => new Blob([content], {type: 'image/svg+xml'})`)(svgContent)
+        let url = %raw(`(b) => URL.createObjectURL(b)`)(blob)
+        let link = createElement("a")
+        link->setHref(url)
+        link->setDownload(filename)
+        let linkStyle = link->style
+        linkStyle["display"] = "none"
+        body->appendChild(link)
+        link->click
+        body->removeChild(link)
+        %raw(`(u) => URL.revokeObjectURL(u)`)(url)
       }
     }
   }
@@ -248,9 +248,9 @@ let exportCurrentSketch = () => {
 // Register a sketch with its import path
 let registerSketch = (name: string, importPath: string) => {
   state := {
-    ...state.contents,
-    sketches: Array.concat(state.contents.sketches, [{name, importPath}]),
-  }
+      ...state.contents,
+      sketches: Array.concat(state.contents.sketches, [{name, importPath}]),
+    }
   Console.log(`Registered sketch: ${name} (${importPath})`)
 }
 

@@ -39,7 +39,16 @@ let customPaperSize = (widthMm: float, heightMm: float): paperSize => {
 @val @scope("document")
 external getElementById: string => Js.Nullable.t<Dom.element> = "getElementById"
 
+@val @scope("document")
+external createElement: string => Dom.element = "createElement"
+
 @get external value: Dom.element => string = "value"
+@set external setValue: (Dom.element, string) => unit = "value"
+@set external setTextContent: (Dom.element, string) => unit = "textContent"
+@set external setClassName: (Dom.element, string) => unit = "className"
+@set external setInnerHTML: (Dom.element, string) => unit = "innerHTML"
+@send external setAttribute: (Dom.element, string, string) => unit = "setAttribute"
+@send external appendChild: (Dom.element, Dom.element) => unit = "appendChild"
 
 @send
 external addEventListener: (Dom.element, string, unit => unit) => unit = "addEventListener"
@@ -63,6 +72,8 @@ type drawFn = (P5.t, paperSize) => unit
 
 // Global current paper size (for export)
 let currentPaperSize = ref(getPaperSize("A4"))
+let currentMarginMm = ref(10.0) // Default 10mm margin (bleed/cut area)
+let currentPaddingMm = ref(5.0) // Default 5mm padding (additional safe space)
 
 // Get current paper size (for export)
 let getCurrentPaperSize = () => currentPaperSize.contents
@@ -120,11 +131,76 @@ let createPlotterSketch = (drawFn: drawFn) => {
       }
 
 
+      // Create margin and padding controls
+      let createSpacingControls = () => {
+        let controlsDiv = getElementById("paper-settings-controls")
+        switch controlsDiv->Js.Nullable.toOption {
+        | None => Console.log("Paper settings controls container not found")
+        | Some(container) => {
+            container->setInnerHTML("")
+            container->setClassName("mb-6 space-y-4")
+
+            // Margin label
+            let marginLabel = createElement("label")
+            marginLabel->setTextContent("Margin (mm) - Bleed/Cut Area")
+            marginLabel->setAttribute("for", "margin-size")
+            marginLabel->setClassName("block text-sm font-medium text-zinc-300 mb-1")
+            container->appendChild(marginLabel)
+
+            // Margin input
+            let marginInput = createElement("input")
+            marginInput->setAttribute("type", "number")
+            marginInput->setAttribute("id", "margin-size")
+            marginInput->setValue("10")
+            marginInput->setAttribute("min", "0")
+            marginInput->setAttribute("max", "50")
+            marginInput->setAttribute("step", "1")
+            marginInput->setClassName("w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500")
+
+            marginInput->addEventListener("input", () => {
+              let value = marginInput->value->Float.fromString->Option.getOr(10.0)
+              currentMarginMm := value
+            })
+
+            container->appendChild(marginInput)
+
+            // Padding label
+            let paddingLabel = createElement("label")
+            paddingLabel->setTextContent("Padding (mm) - Extra Safe Space")
+            paddingLabel->setAttribute("for", "padding-size")
+            paddingLabel->setClassName("block text-sm font-medium text-zinc-300 mb-1 mt-3")
+            container->appendChild(paddingLabel)
+
+            // Padding input
+            let paddingInput = createElement("input")
+            paddingInput->setAttribute("type", "number")
+            paddingInput->setAttribute("id", "padding-size")
+            paddingInput->setValue("5")
+            paddingInput->setAttribute("min", "0")
+            paddingInput->setAttribute("max", "50")
+            paddingInput->setAttribute("step", "1")
+            paddingInput->setClassName("w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500")
+
+            paddingInput->addEventListener("input", () => {
+              let value = paddingInput->value->Float.fromString->Option.getOr(5.0)
+              currentPaddingMm := value
+            })
+
+            container->appendChild(paddingInput)
+
+            Console.log("Spacing controls created")
+          }
+        }
+      }
+
       // Setup - called once at the start
       p->P5.setSetup(() => {
         let canvas = p->P5.createCanvas(currentSize.contents.width, currentSize.contents.height)
         canvas->ignore
         p->P5.background(255) // White background for paper
+
+        // Create spacing controls
+        createSpacingControls()
 
         // Add event listener to paper size selector
         let selector = getElementById("paper-size")
@@ -146,32 +222,49 @@ let createPlotterSketch = (drawFn: drawFn) => {
         // White background for paper
         p->P5.background(255)
 
-        // Draw a margin border (40px = ~10mm at 96 DPI) for plotter safe area
-        let margin = 40.0
+        // Convert margin and padding from mm to pixels
+        let marginPx = currentMarginMm.contents *. 3.7795275591
+        let paddingPx = currentPaddingMm.contents *. 3.7795275591
+        let totalSpacePx = marginPx +. paddingPx
+
+        // Draw margin border (light gray) - bleed/cut area
         p->P5.noFill
-        p->P5.stroke(200) // Light gray to show margin
+        p->P5.stroke(200)
         p->P5.strokeWeight(1)
         p->P5.rect(
-          margin,
-          margin,
-          (currentSize.contents.width->Int.toFloat -. margin *. 2.0),
-          (currentSize.contents.height->Int.toFloat -. margin *. 2.0),
+          marginPx,
+          marginPx,
+          (currentSize.contents.width->Int.toFloat -. marginPx *. 2.0),
+          (currentSize.contents.height->Int.toFloat -. marginPx *. 2.0),
         )
 
-        // Create a reduced paper size that accounts for margins
-        let marginedSize = {
-          width: currentSize.contents.width - (margin *. 2.0)->Float.toInt,
-          height: currentSize.contents.height - (margin *. 2.0)->Float.toInt,
-          widthMm: currentSize.contents.widthMm -. (margin *. 2.0 /. 3.7795275591),
-          heightMm: currentSize.contents.heightMm -. (margin *. 2.0 /. 3.7795275591),
+        // Draw padding border (darker gray) - safe drawing area
+        if paddingPx > 0.0 {
+          p->P5.stroke(150)
+          p->P5.strokeWeight(1)
+          p->P5.rect(
+            totalSpacePx,
+            totalSpacePx,
+            (currentSize.contents.width->Int.toFloat -. totalSpacePx *. 2.0),
+            (currentSize.contents.height->Int.toFloat -. totalSpacePx *. 2.0),
+          )
         }
 
-        // Push transform to offset drawing into the margin area
-        p->P5.push
-        p->P5.translate(margin, margin)
+        // Create a reduced paper size that accounts for margin + padding
+        let totalSpaceMm = currentMarginMm.contents +. currentPaddingMm.contents
+        let drawableSize = {
+          width: currentSize.contents.width - (totalSpacePx *. 2.0)->Float.toInt,
+          height: currentSize.contents.height - (totalSpacePx *. 2.0)->Float.toInt,
+          widthMm: currentSize.contents.widthMm -. totalSpaceMm *. 2.0,
+          heightMm: currentSize.contents.heightMm -. totalSpaceMm *. 2.0,
+        }
 
-        // Call the custom draw function with margined paper size
-        drawFn(p, marginedSize)
+        // Push transform to offset drawing into the safe area
+        p->P5.push
+        p->P5.translate(totalSpacePx, totalSpacePx)
+
+        // Call the custom draw function with drawable paper size
+        drawFn(p, drawableSize)
 
         p->P5.pop
       })

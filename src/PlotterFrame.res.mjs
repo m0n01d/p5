@@ -74,6 +74,14 @@ var currentPaperSize = {
   contents: getPaperSize("A4")
 };
 
+var currentMarginMm = {
+  contents: 10.0
+};
+
+var currentPaddingMm = {
+  contents: 5.0
+};
+
 function getCurrentPaperSize() {
   return currentPaperSize.contents;
 }
@@ -116,9 +124,56 @@ function createPlotterSketch(drawFn) {
         p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
         p.background(255);
       };
+      var createSpacingControls = function () {
+        var controlsDiv = document.getElementById("paper-settings-controls");
+        if (controlsDiv == null) {
+          console.log("Paper settings controls container not found");
+          return ;
+        }
+        controlsDiv.innerHTML = "";
+        controlsDiv.className = "mb-6 space-y-4";
+        var marginLabel = document.createElement("label");
+        marginLabel.textContent = "Margin (mm) - Bleed/Cut Area";
+        marginLabel.setAttribute("for", "margin-size");
+        marginLabel.className = "block text-sm font-medium text-zinc-300 mb-1";
+        controlsDiv.appendChild(marginLabel);
+        var marginInput = document.createElement("input");
+        marginInput.setAttribute("type", "number");
+        marginInput.setAttribute("id", "margin-size");
+        marginInput.value = "10";
+        marginInput.setAttribute("min", "0");
+        marginInput.setAttribute("max", "50");
+        marginInput.setAttribute("step", "1");
+        marginInput.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+        marginInput.addEventListener("input", (function () {
+                var value = Core__Option.getOr(Core__Float.fromString(marginInput.value), 10.0);
+                currentMarginMm.contents = value;
+              }));
+        controlsDiv.appendChild(marginInput);
+        var paddingLabel = document.createElement("label");
+        paddingLabel.textContent = "Padding (mm) - Extra Safe Space";
+        paddingLabel.setAttribute("for", "padding-size");
+        paddingLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
+        controlsDiv.appendChild(paddingLabel);
+        var paddingInput = document.createElement("input");
+        paddingInput.setAttribute("type", "number");
+        paddingInput.setAttribute("id", "padding-size");
+        paddingInput.value = "5";
+        paddingInput.setAttribute("min", "0");
+        paddingInput.setAttribute("max", "50");
+        paddingInput.setAttribute("step", "1");
+        paddingInput.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+        paddingInput.addEventListener("input", (function () {
+                var value = Core__Option.getOr(Core__Float.fromString(paddingInput.value), 5.0);
+                currentPaddingMm.contents = value;
+              }));
+        controlsDiv.appendChild(paddingInput);
+        console.log("Spacing controls created");
+      };
       p.setup = (function () {
           p.createCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
           p.background(255);
+          createSpacingControls();
           var selector = document.getElementById("paper-size");
           if (!(selector == null)) {
             selector.addEventListener("change", updateCanvasSize);
@@ -132,23 +187,32 @@ function createPlotterSketch(drawFn) {
         });
       p.draw = (function () {
           p.background(255);
+          var marginPx = currentMarginMm.contents * 3.7795275591;
+          var paddingPx = currentPaddingMm.contents * 3.7795275591;
+          var totalSpacePx = marginPx + paddingPx;
           p.noFill();
           p.stroke(200);
           p.strokeWeight(1);
-          p.rect(40.0, 40.0, currentPaperSize.contents.width - 40.0 * 2.0, currentPaperSize.contents.height - 40.0 * 2.0);
-          var marginedSize_width = currentPaperSize.contents.width - (40.0 * 2.0 | 0) | 0;
-          var marginedSize_height = currentPaperSize.contents.height - (40.0 * 2.0 | 0) | 0;
-          var marginedSize_widthMm = currentPaperSize.contents.widthMm - 40.0 * 2.0 / 3.7795275591;
-          var marginedSize_heightMm = currentPaperSize.contents.heightMm - 40.0 * 2.0 / 3.7795275591;
-          var marginedSize = {
-            width: marginedSize_width,
-            height: marginedSize_height,
-            widthMm: marginedSize_widthMm,
-            heightMm: marginedSize_heightMm
+          p.rect(marginPx, marginPx, currentPaperSize.contents.width - marginPx * 2.0, currentPaperSize.contents.height - marginPx * 2.0);
+          if (paddingPx > 0.0) {
+            p.stroke(150);
+            p.strokeWeight(1);
+            p.rect(totalSpacePx, totalSpacePx, currentPaperSize.contents.width - totalSpacePx * 2.0, currentPaperSize.contents.height - totalSpacePx * 2.0);
+          }
+          var totalSpaceMm = currentMarginMm.contents + currentPaddingMm.contents;
+          var drawableSize_width = currentPaperSize.contents.width - (totalSpacePx * 2.0 | 0) | 0;
+          var drawableSize_height = currentPaperSize.contents.height - (totalSpacePx * 2.0 | 0) | 0;
+          var drawableSize_widthMm = currentPaperSize.contents.widthMm - totalSpaceMm * 2.0;
+          var drawableSize_heightMm = currentPaperSize.contents.heightMm - totalSpaceMm * 2.0;
+          var drawableSize = {
+            width: drawableSize_width,
+            height: drawableSize_height,
+            widthMm: drawableSize_widthMm,
+            heightMm: drawableSize_heightMm
           };
           p.push();
-          p.translate(40.0, 40.0);
-          drawFn(p, marginedSize);
+          p.translate(totalSpacePx, totalSpacePx);
+          drawFn(p, drawableSize);
           p.pop();
         });
     };
@@ -160,6 +224,8 @@ export {
   getPaperSize ,
   customPaperSize ,
   currentPaperSize ,
+  currentMarginMm ,
+  currentPaddingMm ,
   getCurrentPaperSize ,
   createPlotterSketch ,
 }

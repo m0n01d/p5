@@ -65,6 +65,12 @@ function switchToSketch(index) {
 
               // Update state with loaded sketch
               window.__currentP5Instance = p5Instance;
+              //-- @TODO fix
+              // state := {
+              //         ...state.contents,
+              //         currentP5: Some(p5Instance),
+              //         currentIndex: index,
+              //       }
               window.__sketchLoadComplete = true;
             })
             .catch(err => {
@@ -124,54 +130,50 @@ function createSketchSelector() {
 }
 
 function exportCurrentSketch() {
-  var p5 = state.contents.currentP5;
-  if (p5 !== undefined) {
-    var p5$1 = Caml_option.valFromOption(p5);
-    var formatSelect = document.getElementById("export-format");
-    if (formatSelect == null) {
-      console.log("Export format selector not found");
-      return ;
-    }
-    var format = formatSelect.value;
-    console.log("Exporting current sketch as " + format);
-    var canvas = p5$1.canvas;
-    var timestamp = (new Date().toISOString());
-    var filename = timestamp + "." + format;
-    if (format === "png") {
-      var dataUrl = canvas.toDataURL("image/png", 1.0);
-      var link = document.createElement("a");
-      link.href = dataUrl;
-      link.download = filename;
-      var linkStyle = link.style;
-      linkStyle.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      return ;
-    }
-    if (format !== "svg") {
-      return ;
-    }
-    var dataUrl$1 = canvas.toDataURL("image/png", 1.0);
-    var widthPx = p5$1.width;
-    var heightPx = p5$1.height;
-    var paperSize = PlotterFrame.getCurrentPaperSize();
-    var widthMm = paperSize.widthMm.toString();
-    var heightMm = paperSize.heightMm.toString();
-    var svgContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n     width=\"" + widthMm + "mm\" height=\"" + heightMm + "mm\"\n     viewBox=\"0 0 " + widthPx.toString() + " " + heightPx.toString() + "\">\n  <image width=\"" + widthPx.toString() + "\" height=\"" + heightPx.toString() + "\" xlink:href=\"" + dataUrl$1 + "\"/>\n</svg>";
-    var blob = ((content) => new Blob([content], {type: 'image/svg+xml'}))(svgContent);
-    var url = ((b) => URL.createObjectURL(b))(blob);
-    var link$1 = document.createElement("a");
-    link$1.href = url;
-    link$1.download = filename;
-    var linkStyle$1 = link$1.style;
-    linkStyle$1.display = "none";
-    document.body.appendChild(link$1);
-    link$1.click();
-    document.body.removeChild(link$1);
-    return ((u) => URL.revokeObjectURL(u))(url);
+  var p5 = (window.__currentP5Instance);
+  var formatSelect = document.getElementById("export-format");
+  if (formatSelect == null) {
+    console.log("Export format selector not found");
+    return ;
   }
-  console.log("No sketch to export");
+  var format = formatSelect.value;
+  console.log("Exporting current sketch as " + format);
+  var canvas = p5.canvas;
+  var timestamp = (new Date().toISOString());
+  var filename = timestamp + "." + format;
+  if (format === "png") {
+    var dataUrl = canvas.toDataURL("image/png", 1.0);
+    var link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    var linkStyle = link.style;
+    linkStyle.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return ;
+  }
+  if (format !== "svg") {
+    return ;
+  }
+  var dataUrl$1 = canvas.toDataURL("image/png", 1.0);
+  var widthPx = p5.width;
+  var heightPx = p5.height;
+  var paperSize = PlotterFrame.getCurrentPaperSize();
+  var widthMm = paperSize.widthMm.toString();
+  var heightMm = paperSize.heightMm.toString();
+  var svgContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n     width=\"" + widthMm + "mm\" height=\"" + heightMm + "mm\"\n     viewBox=\"0 0 " + widthPx.toString() + " " + heightPx.toString() + "\">\n  <image width=\"" + widthPx.toString() + "\" height=\"" + heightPx.toString() + "\" xlink:href=\"" + dataUrl$1 + "\"/>\n</svg>";
+  var blob = ((content) => new Blob([content], {type: 'image/svg+xml'}))(svgContent);
+  var url = ((b) => URL.createObjectURL(b))(blob);
+  var link$1 = document.createElement("a");
+  link$1.href = url;
+  link$1.download = filename;
+  var linkStyle$1 = link$1.style;
+  linkStyle$1.display = "none";
+  document.body.appendChild(link$1);
+  link$1.click();
+  document.body.removeChild(link$1);
+  (((u) => URL.revokeObjectURL(u))(url));
 }
 
 function registerSketch(name, importPath) {
