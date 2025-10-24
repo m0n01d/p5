@@ -5,6 +5,8 @@ let numLinesRef = ref(12)
 let amplitudeRef = ref(20.0)
 let gapSizeRef = ref(0.33) // Middle gap as fraction of height (0.33 = 1/3)
 let frequencyRef = ref(4.0) // Number of complete waves across the width
+let focalPointRef = ref(None) // Optional custom focal point (x, y)
+let focalPointLockedRef = ref(false) // Whether focal point is locked by click
 
 let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
   let numLines = numLinesRef.contents
@@ -12,9 +14,35 @@ let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
   let gapSize = gapSizeRef.contents
   let frequency = frequencyRef.contents
 
-  // Calculate center position
-  let centerX = paper.width->Int.toFloat /. 2.0
-  let centerY = paper.height->Int.toFloat /. 2.0
+  // Y is always fixed at center
+  let centerYFixed = paper.height->Int.toFloat /. 2.0
+
+  // Calculate focal point X (use custom if set, otherwise center)
+  let centerX = switch focalPointRef.contents {
+  | Some((x, _)) => x
+  | None => paper.width->Int.toFloat /. 2.0
+  }
+  let centerY = centerYFixed
+
+  // Get mouse position relative to canvas
+  // Need to adjust for the margin + padding offset applied by PlotterFrame
+  let currentMarginMm = PlotterFrame.currentMarginMm.contents
+  let currentPaddingMm = PlotterFrame.currentPaddingMm.contents
+  let totalSpacePx = (currentMarginMm +. currentPaddingMm) *. 3.7795275591
+
+  let mouseXRaw = p->P5.mouseX -. totalSpacePx
+  let mouseYRaw = p->P5.mouseY -. totalSpacePx
+
+  // Update focal point if mouse is over canvas and not locked
+  // Only track X position, Y stays at center
+  if !focalPointLockedRef.contents &&
+     mouseXRaw >= 0.0 && mouseXRaw <= paper.width->Int.toFloat &&
+     mouseYRaw >= 0.0 && mouseYRaw <= paper.height->Int.toFloat {
+    focalPointRef := Some((mouseXRaw, centerYFixed))
+  } else if !focalPointLockedRef.contents {
+    // Mouse left canvas, reset to center
+    focalPointRef := None
+  }
 
   // Calculate gap boundaries
   let gapHeight = paper.height->Int.toFloat *. gapSize
@@ -95,6 +123,17 @@ let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
     p->P5.endShape
     p->P5.pop
   }
+
+  // Draw focal point indicator
+  p->P5.push
+  p->P5.noFill
+  p->P5.stroke3(255, 0, 0)  // Red
+  p->P5.strokeWeight(2)
+  p->P5.circle(centerX, centerY, 10.0)
+  // Draw crosshair
+  p->P5.line(centerX -. 5.0, centerY, centerX +. 5.0, centerY)
+  p->P5.line(centerX, centerY -. 5.0, centerX, centerY +. 5.0)
+  p->P5.pop
 }
 
 // Create controls
@@ -225,8 +264,45 @@ let createControls = () => {
   }
 }
 
-// Create the sketch
+// Create the sketch with mouse handlers
 let createSketch = () => {
   createControls()
-  PlotterFrame.createPlotterSketch(draw)()
+
+  // Create the base sketch
+  let sketchFn = PlotterFrame.createPlotterSketch(draw)
+
+  // Wrap it to add mouse handler
+  let wrappedSketch = () => {
+    (p: P5.t) => {
+      // Call the original sketch setup
+      sketchFn()(p)
+
+      // Add mouse pressed handler to toggle lock
+      p->P5.setMousePressed(() => {
+        // Adjust mouse coordinates for margin + padding offset
+        let currentMarginMm = PlotterFrame.currentMarginMm.contents
+        let currentPaddingMm = PlotterFrame.currentPaddingMm.contents
+        let totalSpacePx = (currentMarginMm +. currentPaddingMm) *. 3.7795275591
+
+        let mouseX = p->P5.mouseX -. totalSpacePx
+        let mouseY = p->P5.mouseY -. totalSpacePx
+
+        // Only handle clicks within the canvas bounds
+        let currentPaper = PlotterFrame.getCurrentPaperSize()
+        if mouseX >= 0.0 && mouseX <= currentPaper.width->Int.toFloat &&
+           mouseY >= 0.0 && mouseY <= currentPaper.height->Int.toFloat {
+          // Toggle lock
+          focalPointLockedRef := !focalPointLockedRef.contents
+
+          if focalPointLockedRef.contents {
+            // Lock at current position (Y always at center)
+            let centerYFixed = currentPaper.height->Int.toFloat /. 2.0
+            focalPointRef := Some((mouseX, centerYFixed))
+          }
+        }
+      })
+    }
+  }
+
+  wrappedSketch()
 }

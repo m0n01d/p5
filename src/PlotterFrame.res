@@ -22,6 +22,16 @@ let getPaperSize = (size: string): paperSize => {
   | "Legal" => {width: 816, height: 1344, widthMm: 215.9, heightMm: 355.6}
   | "Tabloid" => {width: 1056, height: 1632, widthMm: 279.4, heightMm: 431.8}
   | "Square" => {width: 1134, height: 1134, widthMm: 300.0, heightMm: 300.0}
+  // iPhone wallpaper sizes (at actual pixel dimensions)
+  | "iPhone 15 Pro Max" => {width: 1290, height: 2796, widthMm: 341.4, heightMm: 739.7}
+  | "iPhone 15 Pro" => {width: 1179, height: 2556, widthMm: 311.9, heightMm: 676.3}
+  | "iPhone 15 Plus" => {width: 1290, height: 2796, widthMm: 341.4, heightMm: 739.7}
+  | "iPhone 15" => {width: 1179, height: 2556, widthMm: 311.9, heightMm: 676.3}
+  | "iPhone 14 Pro Max" => {width: 1290, height: 2796, widthMm: 341.4, heightMm: 739.7}
+  | "iPhone 14 Pro" => {width: 1179, height: 2556, widthMm: 311.9, heightMm: 676.3}
+  | "iPhone 14 Plus" => {width: 1284, height: 2778, widthMm: 339.7, heightMm: 735.0}
+  | "iPhone 14" => {width: 1170, height: 2532, widthMm: 309.5, heightMm: 670.0}
+  | "iPhone SE" => {width: 750, height: 1334, widthMm: 198.4, heightMm: 353.0}
   | _ => {width: 794, height: 1123, widthMm: 210.0, heightMm: 297.0} // Default to A4
   }
 }

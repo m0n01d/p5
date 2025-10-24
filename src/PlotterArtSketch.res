@@ -18,12 +18,23 @@ let draw = (p: P5.t, paperSize: PlotterFrame.paperSize) => {
     p->P5.circle(centerX, centerY, radius *. 2.0)
   }
 
+  // Get the current margin + padding offset
+  let currentMarginMm = PlotterFrame.currentMarginMm.contents
+  let currentPaddingMm = PlotterFrame.currentPaddingMm.contents
+  let totalSpacePx = (currentMarginMm +. currentPaddingMm) *. 3.7795275591
+
+  // Adjust mouse coordinates to account for the translate offset
+  let adjustedMouseX = p->P5.mouseX -. totalSpacePx
+  let adjustedMouseY = p->P5.mouseY -. totalSpacePx
+
   // Draw animated line art based on mouse position
-  if p->P5.mouseX > 0.0 && p->P5.mouseY > 0.0 {
+  if adjustedMouseX > 0.0 && adjustedMouseY > 0.0 &&
+     adjustedMouseX < paperSize.width->Int.toFloat &&
+     adjustedMouseY < paperSize.height->Int.toFloat {
     p->P5.stroke3(100, 150, 255)
     p->P5.strokeWeight(1)
-    p->P5.line(centerX, centerY, p->P5.mouseX, p->P5.mouseY)
-    p->P5.circle(p->P5.mouseX, p->P5.mouseY, 20.0)
+    p->P5.line(centerX, centerY, adjustedMouseX, adjustedMouseY)
+    p->P5.circle(adjustedMouseX, adjustedMouseY, 20.0)
   }
 }
 

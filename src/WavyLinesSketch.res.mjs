@@ -21,15 +21,37 @@ var frequencyRef = {
   contents: 4.0
 };
 
+var focalPointRef = {
+  contents: undefined
+};
+
+var focalPointLockedRef = {
+  contents: false
+};
+
 function draw(p, paper) {
   var numLines = numLinesRef.contents;
   var amplitude = amplitudeRef.contents;
   var gapSize = gapSizeRef.contents;
   var frequency = frequencyRef.contents;
-  var centerX = paper.width / 2.0;
-  var centerY = paper.height / 2.0;
+  var centerYFixed = paper.height / 2.0;
+  var match = focalPointRef.contents;
+  var centerX = match !== undefined ? match[0] : paper.width / 2.0;
+  var currentMarginMm = PlotterFrame.currentMarginMm.contents;
+  var currentPaddingMm = PlotterFrame.currentPaddingMm.contents;
+  var totalSpacePx = (currentMarginMm + currentPaddingMm) * 3.7795275591;
+  var mouseXRaw = p.mouseX - totalSpacePx;
+  var mouseYRaw = p.mouseY - totalSpacePx;
+  if (!focalPointLockedRef.contents && mouseXRaw >= 0.0 && mouseXRaw <= paper.width && mouseYRaw >= 0.0 && mouseYRaw <= paper.height) {
+    focalPointRef.contents = [
+      mouseXRaw,
+      centerYFixed
+    ];
+  } else if (!focalPointLockedRef.contents) {
+    focalPointRef.contents = undefined;
+  }
   var gapHeight = paper.height * gapSize;
-  var gapTop = centerY - gapHeight / 2.0;
+  var gapTop = centerYFixed - gapHeight / 2.0;
   var linesPerSide = numLines / 2 | 0;
   for(var i = 1; i <= linesPerSide; ++i){
     var spacing = gapTop / (linesPerSide + 1.0);
@@ -46,7 +68,7 @@ function draw(p, paper) {
       var sineWave = Math.sin(t * frequency * 2.0 * Math.PI);
       var waveOffset = sineWave * amplitude;
       var dx = centerX - x;
-      var dy = centerY - baseY;
+      var dy = centerYFixed - baseY;
       var angleToCenter = Math.atan2(dy, dx);
       var xPull = sineWave * amplitude * Math.cos(angleToCenter) * 0.3;
       var yPull = sineWave * amplitude * Math.sin(angleToCenter) * 0.3;
@@ -63,12 +85,20 @@ function draw(p, paper) {
     p.push();
     p.beginShape();
     topPoints.forEach(function (param) {
-          var mirroredY = centerY + (centerY - param[1]);
+          var mirroredY = centerYFixed + (centerYFixed - param[1]);
           p.vertex(param[0], mirroredY);
         });
     p.endShape();
     p.pop();
   }
+  p.push();
+  p.noFill();
+  p.stroke(255, 0, 0);
+  p.strokeWeight(2);
+  p.circle(centerX, centerYFixed, 10.0);
+  p.line(centerX - 5.0, centerYFixed, centerX + 5.0, centerYFixed);
+  p.line(centerX, centerYFixed - 5.0, centerX, centerYFixed + 5.0);
+  p.pop();
 }
 
 function createControls() {
@@ -176,7 +206,33 @@ function createControls() {
 
 function createSketch() {
   createControls();
-  return PlotterFrame.createPlotterSketch(draw)();
+  var sketchFn = PlotterFrame.createPlotterSketch(draw);
+  var wrappedSketch = function () {
+    return function (p) {
+      sketchFn()(p);
+      p.mousePressed = (function () {
+          var currentMarginMm = PlotterFrame.currentMarginMm.contents;
+          var currentPaddingMm = PlotterFrame.currentPaddingMm.contents;
+          var totalSpacePx = (currentMarginMm + currentPaddingMm) * 3.7795275591;
+          var mouseX = p.mouseX - totalSpacePx;
+          var mouseY = p.mouseY - totalSpacePx;
+          var currentPaper = PlotterFrame.getCurrentPaperSize();
+          if (!(mouseX >= 0.0 && mouseX <= currentPaper.width && mouseY >= 0.0 && mouseY <= currentPaper.height)) {
+            return ;
+          }
+          focalPointLockedRef.contents = !focalPointLockedRef.contents;
+          if (!focalPointLockedRef.contents) {
+            return ;
+          }
+          var centerYFixed = currentPaper.height / 2.0;
+          focalPointRef.contents = [
+            mouseX,
+            centerYFixed
+          ];
+        });
+    };
+  };
+  return wrappedSketch();
 }
 
 export {
@@ -184,6 +240,8 @@ export {
   amplitudeRef ,
   gapSizeRef ,
   frequencyRef ,
+  focalPointRef ,
+  focalPointLockedRef ,
   draw ,
   createControls ,
   createSketch ,

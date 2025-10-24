@@ -51,6 +51,45 @@ function getPaperSize(size) {
                 widthMm: 279.4,
                 heightMm: 431.8
               };
+    case "iPhone 14" :
+        return {
+                width: 1170,
+                height: 2532,
+                widthMm: 309.5,
+                heightMm: 670.0
+              };
+    case "iPhone 14 Plus" :
+        return {
+                width: 1284,
+                height: 2778,
+                widthMm: 339.7,
+                heightMm: 735.0
+              };
+    case "iPhone 14 Pro" :
+    case "iPhone 15" :
+    case "iPhone 15 Pro" :
+        return {
+                width: 1179,
+                height: 2556,
+                widthMm: 311.9,
+                heightMm: 676.3
+              };
+    case "iPhone 14 Pro Max" :
+    case "iPhone 15 Plus" :
+    case "iPhone 15 Pro Max" :
+        return {
+                width: 1290,
+                height: 2796,
+                widthMm: 341.4,
+                heightMm: 739.7
+              };
+    case "iPhone SE" :
+        return {
+                width: 750,
+                height: 1334,
+                widthMm: 198.4,
+                heightMm: 353.0
+              };
     default:
       return {
               width: 794,

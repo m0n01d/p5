@@ -13,11 +13,16 @@ function draw(p, paperSize) {
     var radius = maxRadius * i / 20;
     p.circle(centerX, centerY, radius * 2.0);
   }
-  if (p.mouseX > 0.0 && p.mouseY > 0.0) {
+  var currentMarginMm = PlotterFrame.currentMarginMm.contents;
+  var currentPaddingMm = PlotterFrame.currentPaddingMm.contents;
+  var totalSpacePx = (currentMarginMm + currentPaddingMm) * 3.7795275591;
+  var adjustedMouseX = p.mouseX - totalSpacePx;
+  var adjustedMouseY = p.mouseY - totalSpacePx;
+  if (adjustedMouseX > 0.0 && adjustedMouseY > 0.0 && adjustedMouseX < paperSize.width && adjustedMouseY < paperSize.height) {
     p.stroke(100, 150, 255);
     p.strokeWeight(1);
-    p.line(centerX, centerY, p.mouseX, p.mouseY);
-    p.circle(p.mouseX, p.mouseY, 20.0);
+    p.line(centerX, centerY, adjustedMouseX, adjustedMouseY);
+    p.circle(adjustedMouseX, adjustedMouseY, 20.0);
     return ;
   }
   
