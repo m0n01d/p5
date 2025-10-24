@@ -75,5 +75,10 @@ type t
 @send external pop: t => unit = "pop"
 @send external translate: (t, float, float) => unit = "translate"
 
+// Shape drawing functions
+@send external beginShape: t => unit = "beginShape"
+@send external endShape: t => unit = "endShape"
+@send external vertex: (t, float, float) => unit = "vertex"
+
 // Text functions (accessed via raw for now)
 // We use %raw for text functions to avoid complex bindings

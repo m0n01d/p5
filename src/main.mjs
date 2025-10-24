@@ -13,6 +13,7 @@ registerSketch('Wave Function Collapse - Lines', './WFCPlotterSketch.res.mjs');
 registerSketch('Wave Function Collapse - Pipes', './WFCPipesSketch.res.mjs');
 registerSketch('Wave Function Collapse - Wood Grain', './WFCWoodGrainSketch.res.mjs');
 registerSketch('Grid - Tiled Shapes', './GridSketch.res.mjs');
+registerSketch('Wavy Lines - Center Focus', './WavyLinesSketch.res.mjs');
 
 // Initialize the sketch manager
 init();
