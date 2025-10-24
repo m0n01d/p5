@@ -13,14 +13,23 @@ var amplitudeRef = {
   contents: 20.0
 };
 
+var gapSizeRef = {
+  contents: 0.33
+};
+
 function draw(p, paper) {
   var numLines = numLinesRef.contents;
   var amplitude = amplitudeRef.contents;
+  var gapSize = gapSizeRef.contents;
+  var centerX = paper.width / 2.0;
   var centerY = paper.height / 2.0;
-  var spacing = paper.height / (numLines + 1.0);
-  for(var i = 1; i <= numLines; ++i){
-    var y = spacing * i;
-    var phaseShift = y < centerY ? Math.PI : 0.0;
+  var gapHeight = paper.height * gapSize;
+  var gapTop = centerY - gapHeight / 2.0;
+  var linesPerSide = numLines / 2 | 0;
+  for(var i = 1; i <= linesPerSide; ++i){
+    var spacing = gapTop / (linesPerSide + 1.0);
+    var baseY = spacing * i;
+    var topPoints = [];
     p.noFill();
     p.stroke(0);
     p.strokeWeight(2);
@@ -29,9 +38,29 @@ function draw(p, paper) {
     for(var step = 0; step <= 200; ++step){
       var t = step / 200;
       var x = t * paper.width;
-      var waveOffset = Math.sin(t * 4.0 * 2.0 * Math.PI + phaseShift) * amplitude;
-      p.vertex(x, y + waveOffset);
+      var sineWave = Math.sin(t * 4.0 * 2.0 * Math.PI);
+      var waveOffset = sineWave * amplitude;
+      var dx = centerX - x;
+      var dy = centerY - baseY;
+      var angleToCenter = Math.atan2(dy, dx);
+      var xPull = sineWave * amplitude * Math.cos(angleToCenter) * 0.3;
+      var yPull = sineWave * amplitude * Math.sin(angleToCenter) * 0.3;
+      var finalX = x + xPull;
+      var finalY = baseY + waveOffset + yPull;
+      topPoints.push([
+            finalX,
+            finalY
+          ]);
+      p.vertex(finalX, finalY);
     }
+    p.endShape();
+    p.pop();
+    p.push();
+    p.beginShape();
+    topPoints.forEach(function (param) {
+          var mirroredY = centerY + (centerY - param[1]);
+          p.vertex(param[0], mirroredY);
+        });
     p.endShape();
     p.pop();
   }
@@ -91,6 +120,29 @@ function createControls() {
           amplitudeRef.contents = value;
           ampValue.textContent = value.toString();
         }));
+  var gapLabel = document.createElement("label");
+  gapLabel.textContent = "Center Gap Size (%)";
+  gapLabel.setAttribute("for", "gap-size");
+  gapLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-4";
+  container.appendChild(gapLabel);
+  var gapInput = document.createElement("input");
+  gapInput.setAttribute("type", "range");
+  gapInput.setAttribute("id", "gap-size");
+  gapInput.setAttribute("min", "0");
+  gapInput.setAttribute("max", "50");
+  gapInput.setAttribute("value", "33");
+  gapInput.className = "w-full";
+  container.appendChild(gapInput);
+  var gapValue = document.createElement("div");
+  gapValue.setAttribute("id", "gap-size-value");
+  gapValue.textContent = "33%";
+  gapValue.className = "text-sm text-zinc-400";
+  container.appendChild(gapValue);
+  gapInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(gapInput.value), 33.0);
+          gapSizeRef.contents = value / 100.0;
+          gapValue.textContent = value.toString() + "%";
+        }));
   console.log("Wavy lines controls created");
 }
 
@@ -102,6 +154,7 @@ function createSketch() {
 export {
   numLinesRef ,
   amplitudeRef ,
+  gapSizeRef ,
   draw ,
   createControls ,
   createSketch ,
