@@ -67,11 +67,14 @@ type t
 @set external setSetup: (t, unit => unit) => unit = "setup"
 @set external setDraw: (t, unit => unit) => unit = "draw"
 @set external setMousePressed: (t, unit => unit) => unit = "mousePressed"
+@set external setMouseClicked: (t, unit => unit) => unit = "mouseClicked"
+@get external getSetup: t => (unit => unit) = "setup"
 
 // Frame rate control
 @send external frameRate: (t, float) => unit = "frameRate"
 @send external noLoop: t => unit = "noLoop"
 @send external loop: t => unit = "loop"
+@send external redraw: t => unit = "redraw"
 
 // Transform functions
 @send external push: t => unit = "push"

@@ -4,7 +4,16 @@
 let tileSize = 50.0
 
 // Draw a single tile at position (x, y)
-let rec drawTile = (p: P5.t, x: float, y: float, size: float, l: int) => {
+// canvasWidth and canvasHeight are the actual drawable area bounds
+let rec drawTile = (
+  p: P5.t,
+  x: float,
+  y: float,
+  size: float,
+  l: int,
+  canvasWidth: float,
+  canvasHeight: float,
+) => {
   Console.log(l)
 
   // Random 0 or 1: 0 = vertical, 1 = horizontal
@@ -13,55 +22,150 @@ let rec drawTile = (p: P5.t, x: float, y: float, size: float, l: int) => {
 
     let centerX = x +. size /. 2.0
     let centerY = y +. size /. 2.0
-    let lineLength = size *. 0.5
 
     p->P5.stroke(0)
     p->P5.strokeWeight(1)
 
     if orientation == 0 {
-      // Vertical line
-      let lineTop = centerY -. lineLength /. 2.0
-      let lineBottom = centerY +. lineLength /. 2.0
+      // Vertical line - spans full height of tile, clipped to canvas
+      let lineTop = y > 0.0 ? y : 0.0
+      let lineBottom = y +. size < canvasHeight ? y +. size : canvasHeight
       p->P5.line(centerX, lineTop, centerX, lineBottom)
     } else {
-      // Horizontal line
-      let lineLeft = centerX -. lineLength /. 2.0
-      let lineRight = centerX +. lineLength /. 2.0
+      // Horizontal line - spans full width of tile, clipped to canvas
+      let lineLeft = x > 0.0 ? x : 0.0
+      let lineRight = x +. size < canvasWidth ? x +. size : canvasWidth
       p->P5.line(lineLeft, centerY, lineRight, centerY)
     }
   } else {
     let s = size /. 2.0
     let nextlevel = l - 1
     // Top-left quadrant
-    drawTile(p, x, y, s, nextlevel)
+    drawTile(p, x, y, s, nextlevel, canvasWidth, canvasHeight)
     // Top-right quadrant
-    drawTile(p, x +. s, y, s, nextlevel)
+    drawTile(p, x +. s, y, s, nextlevel, canvasWidth, canvasHeight)
     // Bottom-left quadrant
-    drawTile(p, x, y +. s, s, nextlevel)
+    drawTile(p, x, y +. s, s, nextlevel, canvasWidth, canvasHeight)
     // Bottom-right quadrant
-    drawTile(p, x +. s, y +. s, s, nextlevel)
+    drawTile(p, x +. s, y +. s, s, nextlevel, canvasWidth, canvasHeight)
   }
 }
 
-// Recursively tile the canvas
-// Track if we've drawn once
-let hasDrawn = ref(false)
+// Current recursion level (adjustable)
+let currentLevel = ref(4)
 
-let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
-  if !hasDrawn.contents {
-    let paperWidth = paper.width->Int.toFloat
-    let paperHeight = paper.height->Int.toFloat
-    // Use the smaller dimension to make a square tiling
-    let size = paperWidth < paperHeight ? paperWidth : paperHeight
-    drawTile(p, 0.0, 0.0, size, 1)
+// Store p5 instance and paper size for redraws
+let p5Instance: ref<option<P5.t>> = ref(None)
+let paperSize: ref<option<PlotterFrame.paperSize>> = ref(None)
 
-    // Fill entire canvas with tiles
-
-    // Stop the loop after first draw
-    p->P5.noLoop
-    hasDrawn := true
+// Redraw function - redraws by triggering PlotterFrame's draw cycle ONCE
+let redrawTiling = () => {
+  switch p5Instance.contents {
+  | Some(p) => {
+      // Trigger one frame of the draw cycle
+      p->P5.loop
+      // PlotterFrame's draw will call drawWithControls which calls draw()
+      // draw() will call noLoop again after drawing
+    }
+  | None => ()
   }
+}
+
+// Draw function called by PlotterFrame
+let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
+  // Store references for later redraws
+  p5Instance := Some(p)
+  paperSize := Some(paper)
+
+  // Draw the tiling pattern
+  let paperWidth = paper.width->Int.toFloat
+  let paperHeight = paper.height->Int.toFloat
+
+  // Use a square size based on the larger dimension to ensure full coverage
+  let size = paperWidth > paperHeight ? paperWidth : paperHeight
+
+  // Offset to center the square on the canvas
+  let offsetX = (size -. paperWidth) /. 2.0
+  let offsetY = (size -. paperHeight) /. 2.0
+
+  // Start drawing from negative offset to center the pattern
+  drawTile(p, -.offsetX, -.offsetY, size, currentLevel.contents, paperWidth, paperHeight)
+
+  // Stop the loop after this frame
+  p->P5.noLoop
+}
+
+// Track if controls have been created
+let controlsCreated = ref(false)
+
+// Setup controls
+let setupControls = (p: P5.t) => {
+  if !controlsCreated.contents {
+    controlsCreated := true
+
+    // Get the controls container
+    let controlsDiv = PlotterFrame.getElementById("paper-settings-controls")
+    switch controlsDiv->Js.Nullable.toOption {
+    | None => Console.log("Paper settings controls container not found")
+    | Some(container) => {
+        // Create level label
+        let levelLabel = PlotterFrame.createElement("label")
+        levelLabel->PlotterFrame.setTextContent("Recursion Level (0-8)")
+        levelLabel->PlotterFrame.setAttribute("for", "recursion-level")
+        levelLabel->PlotterFrame.setClassName("block text-sm font-medium text-zinc-300 mb-1 mt-3")
+        container->PlotterFrame.appendChild(levelLabel)
+
+        // Create level input
+        let levelInput = PlotterFrame.createElement("input")
+        levelInput->PlotterFrame.setAttribute("type", "number")
+        levelInput->PlotterFrame.setAttribute("id", "recursion-level")
+        levelInput->PlotterFrame.setValue("4")
+        levelInput->PlotterFrame.setAttribute("min", "0")
+        levelInput->PlotterFrame.setAttribute("max", "8")
+        levelInput->PlotterFrame.setAttribute("step", "1")
+        levelInput->PlotterFrame.setClassName(
+          "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+        )
+
+        // Add change handler for level input
+        levelInput->PlotterFrame.addEventListener("input", () => {
+          let value = levelInput->PlotterFrame.value->Float.fromString->Option.getOr(4.0)
+          currentLevel := value->Float.toInt
+          redrawTiling() // Directly redraw, no loop
+        })
+
+        container->PlotterFrame.appendChild(levelInput)
+
+        // Create hint label
+        let hintLabel = PlotterFrame.createElement("p")
+        hintLabel->PlotterFrame.setTextContent("Click canvas to regenerate pattern")
+        hintLabel->PlotterFrame.setClassName("text-xs text-zinc-400 mt-3 italic")
+        container->PlotterFrame.appendChild(hintLabel)
+
+        Console.log("Tiling controls created")
+      }
+    }
+
+    // Add click handler to canvas
+    let canvas = p->P5.canvas
+    canvas->PlotterFrame.addEventListener("click", () => {
+      // Change random seed and redraw directly
+      switch p5Instance.contents {
+      | Some(p) => {
+          p->P5.randomSeed(Js.Date.now())
+          redrawTiling() // Directly redraw, no loop
+        }
+      | None => ()
+      }
+    })
+  }
+}
+
+// Enhanced draw with controls setup
+let drawWithControls = (p: P5.t, paper: PlotterFrame.paperSize) => {
+  setupControls(p)
+  draw(p, paper)
 }
 
 // Create the sketch
-let createSketch = PlotterFrame.createPlotterSketch(draw)
+let createSketch = PlotterFrame.createPlotterSketch(drawWithControls)
