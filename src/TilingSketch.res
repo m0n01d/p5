@@ -16,26 +16,38 @@ let rec drawTile = (
 ) => {
   Console.log(l)
 
-  // Random 0 or 1: 0 = vertical, 1 = horizontal
-  if l == 0 {
+  // Early exit if tile is completely outside canvas bounds
+  if x >= canvasWidth || y >= canvasHeight || x +. size <= 0.0 || y +. size <= 0.0 {
+    ()
+  } else if l == 0 {
+    // Random 0 or 1: 0 = vertical, 1 = horizontal
     let orientation = p->P5.random2(0.0, 2.0)->Float.toInt
-
-    let centerX = x +. size /. 2.0
-    let centerY = y +. size /. 2.0
 
     p->P5.stroke(0)
     p->P5.strokeWeight(1)
 
     if orientation == 0 {
-      // Vertical line - spans full height of tile, clipped to canvas
-      let lineTop = y > 0.0 ? y : 0.0
-      let lineBottom = y +. size < canvasHeight ? y +. size : canvasHeight
-      p->P5.line(centerX, lineTop, centerX, lineBottom)
+      // Vertical line - clipped to visible portion of tile
+      // Clip tile boundaries to canvas
+      let visibleLeft = x > 0.0 ? x : 0.0
+      let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
+      let visibleTop = y > 0.0 ? y : 0.0
+      let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
+
+      // Center X based on visible width
+      let centerX = (visibleLeft +. visibleRight) /. 2.0
+      p->P5.line(centerX, visibleTop, centerX, visibleBottom)
     } else {
-      // Horizontal line - spans full width of tile, clipped to canvas
-      let lineLeft = x > 0.0 ? x : 0.0
-      let lineRight = x +. size < canvasWidth ? x +. size : canvasWidth
-      p->P5.line(lineLeft, centerY, lineRight, centerY)
+      // Horizontal line - clipped to visible portion of tile
+      // Clip tile boundaries to canvas
+      let visibleLeft = x > 0.0 ? x : 0.0
+      let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
+      let visibleTop = y > 0.0 ? y : 0.0
+      let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
+
+      // Center Y based on visible height
+      let centerY = (visibleTop +. visibleBottom) /. 2.0
+      p->P5.line(visibleLeft, centerY, visibleRight, centerY)
     }
   } else {
     let s = size /. 2.0

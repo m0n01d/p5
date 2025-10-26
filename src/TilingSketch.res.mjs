@@ -12,21 +12,28 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
     var y = _y;
     var x = _x;
     console.log(l);
+    if (x >= canvasWidth || y >= canvasHeight || x + size <= 0.0 || y + size <= 0.0) {
+      return ;
+    }
     if (l === 0) {
       var orientation = p.random(0.0, 2.0) | 0;
-      var centerX = x + size / 2.0;
-      var centerY = y + size / 2.0;
       p.stroke(0);
       p.strokeWeight(1);
       if (orientation === 0) {
-        var lineTop = y > 0.0 ? y : 0.0;
-        var lineBottom = y + size < canvasHeight ? y + size : canvasHeight;
-        p.line(centerX, lineTop, centerX, lineBottom);
+        var visibleLeft = x > 0.0 ? x : 0.0;
+        var visibleRight = x + size < canvasWidth ? x + size : canvasWidth;
+        var visibleTop = y > 0.0 ? y : 0.0;
+        var visibleBottom = y + size < canvasHeight ? y + size : canvasHeight;
+        var centerX = (visibleLeft + visibleRight) / 2.0;
+        p.line(centerX, visibleTop, centerX, visibleBottom);
         return ;
       }
-      var lineLeft = x > 0.0 ? x : 0.0;
-      var lineRight = x + size < canvasWidth ? x + size : canvasWidth;
-      p.line(lineLeft, centerY, lineRight, centerY);
+      var visibleLeft$1 = x > 0.0 ? x : 0.0;
+      var visibleRight$1 = x + size < canvasWidth ? x + size : canvasWidth;
+      var visibleTop$1 = y > 0.0 ? y : 0.0;
+      var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
+      var centerY = (visibleTop$1 + visibleBottom$1) / 2.0;
+      p.line(visibleLeft$1, centerY, visibleRight$1, centerY);
       return ;
     }
     var s = size / 2.0;
