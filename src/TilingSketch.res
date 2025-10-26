@@ -19,12 +19,26 @@ let rec drawTile = (
   // Early exit if tile is completely outside canvas bounds
   if x >= canvasWidth || y >= canvasHeight || x +. size <= 0.0 || y +. size <= 0.0 {
     ()
-  } else if l == 0 {
-    // Random 0 or 1: 0 = vertical, 1 = horizontal
-    let orientation = p->P5.random2(0.0, 2.0)->Float.toInt
+  } else {
+    // DEBUG: Draw red quadrant borders - clipped to visible area
+    let visibleLeft = x > 0.0 ? x : 0.0
+    let visibleTop = y > 0.0 ? y : 0.0
+    let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
+    let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
+    let visibleWidth = visibleRight -. visibleLeft
+    let visibleHeight = visibleBottom -. visibleTop
 
-    p->P5.stroke(0)
+    p->P5.stroke3(255, 0, 0)
     p->P5.strokeWeight(1)
+    p->P5.noFill
+    p->P5.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight)
+
+    if l == 0 {
+      // Random 0 or 1: 0 = vertical, 1 = horizontal
+      let orientation = p->P5.random2(0.0, 2.0)->Float.toInt
+
+      p->P5.stroke(0)
+      p->P5.strokeWeight(1)
 
     if orientation == 0 {
       // Vertical line - clipped to visible portion of tile
@@ -49,7 +63,7 @@ let rec drawTile = (
       let centerY = (visibleTop +. visibleBottom) /. 2.0
       p->P5.line(visibleLeft, centerY, visibleRight, centerY)
     }
-  } else {
+    } else {
     let s = size /. 2.0
     let nextlevel = l - 1
     // Top-left quadrant
@@ -60,6 +74,7 @@ let rec drawTile = (
     drawTile(p, x, y +. s, s, nextlevel, canvasWidth, canvasHeight)
     // Bottom-right quadrant
     drawTile(p, x +. s, y +. s, s, nextlevel, canvasWidth, canvasHeight)
+    }
   }
 }
 
@@ -89,18 +104,21 @@ let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
   p5Instance := Some(p)
   paperSize := Some(paper)
 
-  // Draw the tiling pattern
+  // Draw the tiling pattern within the drawable area only
+  // paper dimensions are already the safe area (margin/padding removed by PlotterFrame)
   let paperWidth = paper.width->Int.toFloat
   let paperHeight = paper.height->Int.toFloat
 
-  // Use a square size based on the larger dimension to ensure full coverage
+  // Use a SQUARE based on the larger dimension to create the recursive pattern
+  // But it will be clipped to paperWidth x paperHeight
   let size = paperWidth > paperHeight ? paperWidth : paperHeight
 
-  // Offset to center the square on the canvas
+  // Center the square pattern on the rectangular canvas
   let offsetX = (size -. paperWidth) /. 2.0
   let offsetY = (size -. paperHeight) /. 2.0
 
-  // Start drawing from negative offset to center the pattern
+  // Start tiling from negative offset to center the square pattern
+  // The square extends beyond bounds, but drawing is clipped to paperWidth x paperHeight
   drawTile(p, -.offsetX, -.offsetY, size, currentLevel.contents, paperWidth, paperHeight)
 
   // Stop the loop after this frame

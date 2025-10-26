@@ -15,25 +15,35 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
     if (x >= canvasWidth || y >= canvasHeight || x + size <= 0.0 || y + size <= 0.0) {
       return ;
     }
+    var visibleLeft = x > 0.0 ? x : 0.0;
+    var visibleTop = y > 0.0 ? y : 0.0;
+    var visibleRight = x + size < canvasWidth ? x + size : canvasWidth;
+    var visibleBottom = y + size < canvasHeight ? y + size : canvasHeight;
+    var visibleWidth = visibleRight - visibleLeft;
+    var visibleHeight = visibleBottom - visibleTop;
+    p.stroke(255, 0, 0);
+    p.strokeWeight(1);
+    p.noFill();
+    p.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight);
     if (l === 0) {
       var orientation = p.random(0.0, 2.0) | 0;
       p.stroke(0);
       p.strokeWeight(1);
       if (orientation === 0) {
-        var visibleLeft = x > 0.0 ? x : 0.0;
-        var visibleRight = x + size < canvasWidth ? x + size : canvasWidth;
-        var visibleTop = y > 0.0 ? y : 0.0;
-        var visibleBottom = y + size < canvasHeight ? y + size : canvasHeight;
-        var centerX = (visibleLeft + visibleRight) / 2.0;
-        p.line(centerX, visibleTop, centerX, visibleBottom);
+        var visibleLeft$1 = x > 0.0 ? x : 0.0;
+        var visibleRight$1 = x + size < canvasWidth ? x + size : canvasWidth;
+        var visibleTop$1 = y > 0.0 ? y : 0.0;
+        var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
+        var centerX = (visibleLeft$1 + visibleRight$1) / 2.0;
+        p.line(centerX, visibleTop$1, centerX, visibleBottom$1);
         return ;
       }
-      var visibleLeft$1 = x > 0.0 ? x : 0.0;
-      var visibleRight$1 = x + size < canvasWidth ? x + size : canvasWidth;
-      var visibleTop$1 = y > 0.0 ? y : 0.0;
-      var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
-      var centerY = (visibleTop$1 + visibleBottom$1) / 2.0;
-      p.line(visibleLeft$1, centerY, visibleRight$1, centerY);
+      var visibleLeft$2 = x > 0.0 ? x : 0.0;
+      var visibleRight$2 = x + size < canvasWidth ? x + size : canvasWidth;
+      var visibleTop$2 = y > 0.0 ? y : 0.0;
+      var visibleBottom$2 = y + size < canvasHeight ? y + size : canvasHeight;
+      var centerY = (visibleTop$2 + visibleBottom$2) / 2.0;
+      p.line(visibleLeft$2, centerY, visibleRight$2, centerY);
       return ;
     }
     var s = size / 2.0;
