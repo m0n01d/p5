@@ -5,6 +5,14 @@ import * as Core__Float from "@rescript/core/src/Core__Float.res.mjs";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
 import * as PlotterFrame from "./PlotterFrame.res.mjs";
 
+var currentLevel = {
+  contents: 4
+};
+
+var showDebugGrid = {
+  contents: false
+};
+
 function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
   while(true) {
     var l = _l;
@@ -15,16 +23,18 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
     if (x >= canvasWidth || y >= canvasHeight || x + size <= 0.0 || y + size <= 0.0) {
       return ;
     }
-    var visibleLeft = x > 0.0 ? x : 0.0;
-    var visibleTop = y > 0.0 ? y : 0.0;
-    var visibleRight = x + size < canvasWidth ? x + size : canvasWidth;
-    var visibleBottom = y + size < canvasHeight ? y + size : canvasHeight;
-    var visibleWidth = visibleRight - visibleLeft;
-    var visibleHeight = visibleBottom - visibleTop;
-    p.stroke(255, 0, 0);
-    p.strokeWeight(1);
-    p.noFill();
-    p.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight);
+    if (showDebugGrid.contents) {
+      var visibleLeft = x > 0.0 ? x : 0.0;
+      var visibleTop = y > 0.0 ? y : 0.0;
+      var visibleRight = x + size < canvasWidth ? x + size : canvasWidth;
+      var visibleBottom = y + size < canvasHeight ? y + size : canvasHeight;
+      var visibleWidth = visibleRight - visibleLeft;
+      var visibleHeight = visibleBottom - visibleTop;
+      p.stroke(255, 0, 0);
+      p.strokeWeight(1);
+      p.noFill();
+      p.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight);
+    }
     if (l === 0) {
       var orientation = p.random(0.0, 2.0) | 0;
       p.stroke(0);
@@ -58,10 +68,6 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
     continue ;
   };
 }
-
-var currentLevel = {
-  contents: 4
-};
 
 var p5Instance = {
   contents: undefined
@@ -124,6 +130,22 @@ function setupControls(p) {
             redrawTiling();
           }));
     controlsDiv.appendChild(levelInput);
+    var debugLabel = document.createElement("label");
+    debugLabel.className = "flex items-center mt-3 cursor-pointer";
+    var debugCheckbox = document.createElement("input");
+    debugCheckbox.setAttribute("type", "checkbox");
+    debugCheckbox.setAttribute("id", "debug-grid");
+    debugCheckbox.className = "mr-2";
+    debugCheckbox.addEventListener("change", (function () {
+            showDebugGrid.contents = !showDebugGrid.contents;
+            redrawTiling();
+          }));
+    debugLabel.appendChild(debugCheckbox);
+    var debugText = document.createElement("span");
+    debugText.textContent = "Show Debug Grid (red)";
+    debugText.className = "text-sm text-zinc-300";
+    debugLabel.appendChild(debugText);
+    controlsDiv.appendChild(debugLabel);
     var hintLabel = document.createElement("p");
     hintLabel.textContent = "Click canvas to regenerate pattern";
     hintLabel.className = "text-xs text-zinc-400 mt-3 italic";
@@ -152,8 +174,9 @@ var tileSize = 50.0;
 
 export {
   tileSize ,
-  drawTile ,
   currentLevel ,
+  showDebugGrid ,
+  drawTile ,
   p5Instance ,
   paperSize ,
   redrawTiling ,

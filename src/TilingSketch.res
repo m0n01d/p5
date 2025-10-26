@@ -3,6 +3,12 @@
 // Tile size in pixels
 let tileSize = 50.0
 
+// Current recursion level (adjustable)
+let currentLevel = ref(4)
+
+// Debug grid toggle
+let showDebugGrid = ref(false)
+
 // Draw a single tile at position (x, y)
 // canvasWidth and canvasHeight are the actual drawable area bounds
 let rec drawTile = (
@@ -21,17 +27,19 @@ let rec drawTile = (
     ()
   } else {
     // DEBUG: Draw red quadrant borders - clipped to visible area
-    let visibleLeft = x > 0.0 ? x : 0.0
-    let visibleTop = y > 0.0 ? y : 0.0
-    let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
-    let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
-    let visibleWidth = visibleRight -. visibleLeft
-    let visibleHeight = visibleBottom -. visibleTop
+    if showDebugGrid.contents {
+      let visibleLeft = x > 0.0 ? x : 0.0
+      let visibleTop = y > 0.0 ? y : 0.0
+      let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
+      let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
+      let visibleWidth = visibleRight -. visibleLeft
+      let visibleHeight = visibleBottom -. visibleTop
 
-    p->P5.stroke3(255, 0, 0)
-    p->P5.strokeWeight(1)
-    p->P5.noFill
-    p->P5.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight)
+      p->P5.stroke3(255, 0, 0)
+      p->P5.strokeWeight(1)
+      p->P5.noFill
+      p->P5.rect(visibleLeft, visibleTop, visibleWidth, visibleHeight)
+    }
 
     if l == 0 {
       // Random 0 or 1: 0 = vertical, 1 = horizontal
@@ -77,9 +85,6 @@ let rec drawTile = (
     }
   }
 }
-
-// Current recursion level (adjustable)
-let currentLevel = ref(4)
 
 // Store p5 instance and paper size for redraws
 let p5Instance: ref<option<P5.t>> = ref(None)
@@ -165,6 +170,29 @@ let setupControls = (p: P5.t) => {
         })
 
         container->PlotterFrame.appendChild(levelInput)
+
+        // Debug grid toggle
+        let debugLabel = PlotterFrame.createElement("label")
+        debugLabel->PlotterFrame.setClassName("flex items-center mt-3 cursor-pointer")
+
+        let debugCheckbox = PlotterFrame.createElement("input")
+        debugCheckbox->PlotterFrame.setAttribute("type", "checkbox")
+        debugCheckbox->PlotterFrame.setAttribute("id", "debug-grid")
+        debugCheckbox->PlotterFrame.setClassName("mr-2")
+
+        debugCheckbox->PlotterFrame.addEventListener("change", () => {
+          showDebugGrid := !showDebugGrid.contents
+          redrawTiling()
+        })
+
+        debugLabel->PlotterFrame.appendChild(debugCheckbox)
+
+        let debugText = PlotterFrame.createElement("span")
+        debugText->PlotterFrame.setTextContent("Show Debug Grid (red)")
+        debugText->PlotterFrame.setClassName("text-sm text-zinc-300")
+        debugLabel->PlotterFrame.appendChild(debugText)
+
+        container->PlotterFrame.appendChild(debugLabel)
 
         // Create hint label
         let hintLabel = PlotterFrame.createElement("p")
