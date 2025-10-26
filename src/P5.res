@@ -39,6 +39,7 @@ type t
 // Math functions
 @send external random: (t, float) => float = "random"
 @send external random2: (t, float, float) => float = "random"
+@send external randomSeed: (t, float) => unit = "randomSeed"
 
 // DOM manipulation
 @send external select: (t, string) => Dom.element = "select"
@@ -69,6 +70,8 @@ type t
 
 // Frame rate control
 @send external frameRate: (t, float) => unit = "frameRate"
+@send external noLoop: t => unit = "noLoop"
+@send external loop: t => unit = "loop"
 
 // Transform functions
 @send external push: t => unit = "push"
