@@ -3,6 +3,7 @@
 import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
+import * as PlotterFrame from "./PlotterFrame.res.mjs";
 
 var state = {
   contents: {
@@ -129,7 +130,7 @@ function createSketchSelector() {
 }
 
 function exportCurrentSketch() {
-  var p5 = (window.__currentP5Instance);
+  var p5 = window.__currentP5Instance;
   var formatSelect = document.getElementById("export-format");
   if (formatSelect == null) {
     console.log("Export format selector not found");
@@ -138,26 +139,71 @@ function exportCurrentSketch() {
   var format = formatSelect.value;
   console.log("Exporting current sketch as " + format);
   var canvas = p5.canvas;
-  var timestamp = (new Date().toISOString());
+  var timestamp = new Date().toISOString();
   var filename = timestamp + "." + format;
-  if (format !== "png") {
-    if (format === "svg") {
-      p5.save(filename, "svg");
-      console.log("Saved SVG: " + filename);
-      return ;
-    } else {
-      return ;
-    }
+  if (format === "png") {
+    var dataUrl = canvas.toDataURL("image/png", 1.0);
+    var link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = filename;
+    var linkStyle = link.style;
+    linkStyle.display = "none";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return ;
   }
-  var dataUrl = canvas.toDataURL("image/png", 1.0);
-  var link = document.createElement("a");
-  link.href = dataUrl;
-  link.download = filename;
-  var linkStyle = link.style;
-  linkStyle.display = "none";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  if (format !== "svg") {
+    return ;
+  }
+  var svgElements = document.getElementsByTagName("svg");
+  var svgElement = svgElements[0];
+  if (svgElement !== undefined) {
+    var paperSize = PlotterFrame.getCurrentPaperSize();
+    var svgContent = Caml_option.valFromOption(svgElement).outerHTML;
+    var enhancedSvg = ((function(svgStr, widthMm, heightMm) {
+                // Add width/height in mm and preserve viewBox for coordinate system
+                return svgStr.replace(
+                  /<svg([^>]*)>/,
+                  function(match, attrs) {
+                    // Extract viewBox if it exists
+                    const viewBoxMatch = attrs.match(/viewBox="([^"]+)"/);
+                    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
+
+                    // Build new SVG tag with mm units
+                    let newAttrs = ' version="1.1"';
+                    newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
+                    newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
+                    newAttrs += ' width="' + widthMm + 'mm"';
+                    newAttrs += ' height="' + heightMm + 'mm"';
+                    if (viewBox) {
+                      newAttrs += ' viewBox="' + viewBox + '"';
+                    }
+
+                    return '<svg' + newAttrs + '>';
+                  }
+                );
+              }))(svgContent, paperSize.widthMm, paperSize.heightMm);
+    var blob = new Blob([enhancedSvg], {
+          type: "image/svg+xml"
+        });
+    var url = URL.createObjectURL(blob);
+    var link$1 = document.createElement("a");
+    link$1.href = url;
+    link$1.download = filename;
+    var linkStyle$1 = link$1.style;
+    linkStyle$1.display = "none";
+    document.body.appendChild(link$1);
+    link$1.click();
+    document.body.removeChild(link$1);
+    setTimeout((function () {
+            URL.revokeObjectURL(url);
+          }), 100);
+    console.log("Saved SVG: " + filename + " (" + paperSize.widthMm.toString() + "mm × " + paperSize.heightMm.toString() + "mm)");
+    return ;
+  }
+  console.log("No SVG element found - canvas is not using SVG renderer");
+  console.log("SVG export requires creating canvas with SVG renderer");
 }
 
 function registerSketch(name, importPath) {
@@ -201,4 +247,4 @@ export {
   registerSketch ,
   init ,
 }
-/* No side effect */
+/* PlotterFrame Not a pure module */

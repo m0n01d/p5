@@ -165,18 +165,19 @@ function createPlotterSketch(drawFn) {
         }
         var divStyle = customDiv.style;
         if (size === "Custom") {
-          divStyle.display = "flex";
+          divStyle["display"] = "flex";
           return ;
         }
-        divStyle.display = "none";
+        divStyle["display"] = "none";
         currentPaperSize.contents = getPaperSize(size);
         p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
         p.background(255);
         var canvasElement = p.canvas;
-        ((setTimeout(function(canvas) {
-                      canvas.style.removeProperty('width');
-                      canvas.style.removeProperty('height');
-                    }, 100))(canvasElement));
+        setTimeout((function () {
+                var canvasStyle = canvasElement.style;
+                canvasStyle.removeProperty("width");
+                canvasStyle.removeProperty("height");
+              }), 100);
       };
       var applyCustomSize = function () {
         var widthInput = document.getElementById("custom-width");
@@ -193,10 +194,11 @@ function createPlotterSketch(drawFn) {
         p.resizeCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
         p.background(255);
         var canvasElement = p.canvas;
-        ((setTimeout(function(canvas) {
-                canvas.style.removeProperty('width');
-                canvas.style.removeProperty('height');
-              }, 100))(canvasElement));
+        setTimeout((function () {
+                var canvasStyle = canvasElement.style;
+                canvasStyle.removeProperty("width");
+                canvasStyle.removeProperty("height");
+              }), 100);
       };
       var createSpacingControls = function () {
         var controlsDiv = document.getElementById("paper-settings-controls");
@@ -245,14 +247,13 @@ function createPlotterSketch(drawFn) {
         console.log("Spacing controls created");
       };
       p.setup = (function () {
-          p.createCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height);
+          var svgRenderer = p.SVG;
+          p.createCanvas(currentPaperSize.contents.width, currentPaperSize.contents.height, svgRenderer);
           p.background(255);
           var canvasElement = p.canvas;
-          (((function(canvas) {
-            // Remove p5's inline width/height styles
-            canvas.style.removeProperty('width');
-            canvas.style.removeProperty('height');
-          }))(canvasElement));
+          var canvasStyle = canvasElement.style;
+          canvasStyle.removeProperty("width");
+          canvasStyle.removeProperty("height");
           createSpacingControls();
           var selector = document.getElementById("paper-size");
           if (!(selector == null)) {

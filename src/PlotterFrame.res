@@ -63,6 +63,9 @@ external createElement: string => Dom.element = "createElement"
 @send
 external addEventListener: (Dom.element, string, unit => unit) => unit = "addEventListener"
 
+// Timer binding
+@val external setTimeout: (unit => unit, int) => float = "setTimeout"
+
 // Canvas export bindings
 @send external toDataURL: (Dom.element, string, float) => string = "toDataURL"
 
@@ -71,7 +74,10 @@ external createElement: string => Dom.element = "createElement"
 
 @set external setHref: (Dom.element, string) => unit = "href"
 @set external setDownload: (Dom.element, string) => unit = "download"
-@get external style: Dom.element => {..} = "style"
+type cssStyleDeclaration
+@get external style: Dom.element => cssStyleDeclaration = "style"
+@send external removeProperty: (cssStyleDeclaration, string) => unit = "removeProperty"
+@set_index external setStyleProperty: (cssStyleDeclaration, string, string) => unit = ""
 @send external click: Dom.element => unit = "click"
 @send external appendChild: (Dom.element, Dom.element) => unit = "appendChild"
 @send external removeChild: (Dom.element, Dom.element) => unit = "removeChild"
@@ -136,21 +142,23 @@ let createPlotterSketch = (drawFn: drawFn) => {
             | Some(div) => {
                 let divStyle = div->style
                 if size == "Custom" {
-                  divStyle["display"] = "flex"
+                  divStyle->setStyleProperty("display", "flex")
                 } else {
-                  divStyle["display"] = "none"
+                  divStyle->setStyleProperty("display", "none")
                   currentSize := getPaperSize(size)
                   p->P5.resizeCanvas(currentSize.contents.width, currentSize.contents.height)
                   p->P5.background(255)
 
                   // Remove inline styles after resize
                   let canvasElement = p->P5.canvas
-                  %raw(`
-                    setTimeout(function(canvas) {
-                      canvas.style.removeProperty('width');
-                      canvas.style.removeProperty('height');
-                    }, 100)
-                  `)(canvasElement)
+                  let _ = setTimeout(
+                    () => {
+                      let canvasStyle = canvasElement->style
+                      canvasStyle->removeProperty("width")
+                      canvasStyle->removeProperty("height")
+                    },
+                    100,
+                  )
                 }
               }
             | None => ()
@@ -175,12 +183,14 @@ let createPlotterSketch = (drawFn: drawFn) => {
 
             // Remove inline styles after resize
             let canvasElement = p->P5.canvas
-            %raw(`
-              setTimeout(function(canvas) {
-                canvas.style.removeProperty('width');
-                canvas.style.removeProperty('height');
-              }, 100)
-            `)(canvasElement)
+            let _ = setTimeout(
+              () => {
+                let canvasStyle = canvasElement->style
+                canvasStyle->removeProperty("width")
+                canvasStyle->removeProperty("height")
+              },
+              100,
+            )
           }
         | _ => ()
         }
@@ -254,18 +264,20 @@ let createPlotterSketch = (drawFn: drawFn) => {
 
       // Setup - called once at the start
       p->P5.setSetup(() => {
-        let canvas = p->P5.createCanvas(currentSize.contents.width, currentSize.contents.height)
+        // Create SVG canvas for vector export support
+        let svgRenderer = p->P5._SVG
+        let canvas = p->P5.createCanvasSVG(
+          currentSize.contents.width,
+          currentSize.contents.height,
+          svgRenderer,
+        )
         p->P5.background(255) // White background for paper
 
         // Remove inline width/height styles set by p5 to let CSS handle scaling
         let canvasElement = p->P5.canvas
-        %raw(`
-          (function(canvas) {
-            // Remove p5's inline width/height styles
-            canvas.style.removeProperty('width');
-            canvas.style.removeProperty('height');
-          })
-        `)(canvasElement)
+        let canvasStyle = canvasElement->style
+        canvasStyle->removeProperty("width")
+        canvasStyle->removeProperty("height")
 
         // Create spacing controls
         createSpacingControls()

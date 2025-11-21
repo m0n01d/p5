@@ -30,6 +30,17 @@ external getElementById: string => Js.Nullable.t<Dom.element> = "getElementById"
 @val @scope("document")
 external createElement: string => Dom.element = "createElement"
 
+// Timer binding
+@val external setTimeout: (unit => unit, int) => float = "setTimeout"
+
+// Date binding
+type date
+@new external makeDate: unit => date = "Date"
+@send external toISOString: date => string = "toISOString"
+
+// Window bindings
+@val @scope("window") external currentP5Instance: P5.t = "__currentP5Instance"
+
 @set external setTextContent: (Dom.element, string) => unit = "textContent"
 @set external setClassName: (Dom.element, string) => unit = "className"
 @set external setInnerHTML: (Dom.element, string) => unit = "innerHTML"
@@ -189,7 +200,7 @@ let createSketchSelector = () => {
 
 // Export current sketch
 let exportCurrentSketch = () => {
-  let p5 = %raw(`window.__currentP5Instance`)
+  let p5 = currentP5Instance
   let formatSelect = getElementById("export-format")
   switch formatSelect->Js.Nullable.toOption {
   | None => Console.log("Export format selector not found")
@@ -198,7 +209,7 @@ let exportCurrentSketch = () => {
       Console.log(`Exporting current sketch as ${format}`)
 
       let canvas = p5->P5.canvas
-      let timestamp = %raw(`new Date().toISOString()`)
+      let timestamp = makeDate()->toISOString
       let filename = `${timestamp}.${format}`
 
       if format == "png" {
@@ -213,9 +224,67 @@ let exportCurrentSketch = () => {
         link->click
         body->removeChild(link)
       } else if format == "svg" {
-        // SVG export using p5.js-svg - it uses the regular save() method
-        p5->P5.saveCanvas(filename, "svg")
-        Console.log(`Saved SVG: ${filename}`)
+        // SVG export - extract SVG from DOM and add plotter-friendly metadata
+        let svgElements = P5.getElementsByTagName("svg")
+        switch svgElements[0] {
+        | None => {
+            Console.log("No SVG element found - canvas is not using SVG renderer")
+            Console.log("SVG export requires creating canvas with SVG renderer")
+          }
+        | Some(svgElement) => {
+            // Get the current paper size for physical dimensions
+            let paperSize = PlotterFrame.getCurrentPaperSize()
+
+            // Get the SVG content and modify it for plotter use
+            let svgContent = svgElement->P5.outerHTML
+
+            // Add physical dimensions in mm for plotter software
+            // Replace width and height attributes with mm units while preserving viewBox
+            let enhancedSvg = %raw(`
+              (function(svgStr, widthMm, heightMm) {
+                // Add width/height in mm and preserve viewBox for coordinate system
+                return svgStr.replace(
+                  /<svg([^>]*)>/,
+                  function(match, attrs) {
+                    // Extract viewBox if it exists
+                    const viewBoxMatch = attrs.match(/viewBox="([^"]+)"/);
+                    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
+
+                    // Build new SVG tag with mm units
+                    let newAttrs = ' version="1.1"';
+                    newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
+                    newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
+                    newAttrs += ' width="' + widthMm + 'mm"';
+                    newAttrs += ' height="' + heightMm + 'mm"';
+                    if (viewBox) {
+                      newAttrs += ' viewBox="' + viewBox + '"';
+                    }
+
+                    return '<svg' + newAttrs + '>';
+                  }
+                );
+              })
+            `)(svgContent, paperSize.widthMm, paperSize.heightMm)
+
+            let blobOpts: P5.blobOptions = {\"type": "image/svg+xml"}
+            let blob = P5.createBlob([enhancedSvg], blobOpts)
+            let url = P5.createObjectURL(blob)
+
+            let link = createElement("a")
+            link->setHref(url)
+            link->setDownload(filename)
+            let linkStyle = link->style
+            linkStyle["display"] = "none"
+            body->appendChild(link)
+            link->click
+            body->removeChild(link)
+
+            // Clean up the object URL after a short delay
+            let _ = setTimeout(() => P5.revokeObjectURL(url), 100)
+
+            Console.log(`Saved SVG: ${filename} (${paperSize.widthMm->Float.toString}mm × ${paperSize.heightMm->Float.toString}mm)`)
+          }
+        }
       }
     }
   }

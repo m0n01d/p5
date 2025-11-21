@@ -34,14 +34,15 @@ type t
 @send external parent: (t, string) => t = "parent"
 @send external resizeCanvas: (t, int, int) => unit = "resizeCanvas"
 
-// SVG export (requires p5.js-svg)
-@send external saveSVG: (t, string) => unit = "save"
-
 // WEBGL constant
 @get external _WEBGL: t => string = "WEBGL"
 
-// SVG constant (from p5.js-svg) - accessed via window
-@get @scope("window") external _SVG: t => string = "SVG"
+// SVG constant (from p5.js-svg)
+@get external _SVG: t => string = "SVG"
+
+// Save method - works for both regular and SVG canvases
+@send external save: t => unit = "save"
+@send external saveWithFilename: (t, string) => unit = "save"
 
 // Math functions
 @send external random: (t, float) => float = "random"
@@ -92,6 +93,24 @@ type t
 @send external beginShape: t => unit = "beginShape"
 @send external endShape: t => unit = "endShape"
 @send external vertex: (t, float, float) => unit = "vertex"
+
+// DOM element access
+@val @scope("document")
+external getElementsByTagName: string => array<Dom.element> = "getElementsByTagName"
+
+@get external outerHTML: Dom.element => string = "outerHTML"
+
+// Blob for file creation
+type blob
+type blobOptions = {\"type": string}
+@new external createBlob: (array<string>, blobOptions) => blob = "Blob"
+
+// URL creation for downloads
+@val @scope("URL")
+external createObjectURL: blob => string = "createObjectURL"
+
+@val @scope("URL")
+external revokeObjectURL: string => unit = "revokeObjectURL"
 
 // Text functions (accessed via raw for now)
 // We use %raw for text functions to avoid complex bindings
