@@ -48,6 +48,10 @@ type t
 @send external random: (t, float) => float = "random"
 @send external random2: (t, float, float) => float = "random"
 @send external randomSeed: (t, float) => unit = "randomSeed"
+@send external noise: (t, float) => float = "noise"
+@send external noise2: (t, float, float) => float = "noise"
+@send external noise3: (t, float, float, float) => float = "noise"
+@send external noiseSeed: (t, float) => unit = "noiseSeed"
 
 // DOM manipulation
 @send external select: (t, string) => Dom.element = "select"

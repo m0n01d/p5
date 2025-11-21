@@ -9,11 +9,11 @@ let currentLevel = ref(4)
 // Debug grid toggle
 let showDebugGrid = ref(false)
 
-// Tile type: "straight" or "wavy"
-type tileType = Straight | Wavy
+// Tile type: "straight", "wavy", or "noisy"
+type tileType = Straight | Wavy | Noisy
 let currentTileType = ref(Straight)
 
-// Draw a wavy line using sin wave
+// Draw a wavy line using sin wave that connects smoothly to adjacent tiles
 let drawWavyLine = (
   p: P5.t,
   x1: float,
@@ -27,13 +27,15 @@ let drawWavyLine = (
 
   if isVertical {
     // Vertical wavy line - vary X based on Y
-    let amplitude = (x2 -. x1) *. 0.3 // Wave amplitude is 30% of tile width
-    let frequency = 2.0 // Two complete waves
+    // Use integer number of waves so start and end are at same offset (0)
+    let amplitude = (x2 -. x1) *. 0.2 // Wave amplitude is 20% of tile width
+    let frequency = 2.0 // Two complete waves (integer ensures continuity)
     let centerX = (x1 +. x2) /. 2.0
 
     for i in 0 to steps {
       let t = Float.fromInt(i) /. Float.fromInt(steps)
       let y = y1 +. (y2 -. y1) *. t
+      // sin(0) = 0 and sin(2π * 2) = 0, so wave starts and ends at center
       let wave = Js.Math.sin(t *. frequency *. Js.Math._PI *. 2.0) *. amplitude
       let x = centerX +. wave
 
@@ -52,13 +54,15 @@ let drawWavyLine = (
     }
   } else {
     // Horizontal wavy line - vary Y based on X
-    let amplitude = (y2 -. y1) *. 0.3 // Wave amplitude is 30% of tile height
-    let frequency = 2.0 // Two complete waves
+    // Use integer number of waves so start and end are at same offset (0)
+    let amplitude = (y2 -. y1) *. 0.2 // Wave amplitude is 20% of tile height
+    let frequency = 2.0 // Two complete waves (integer ensures continuity)
     let centerY = (y1 +. y2) /. 2.0
 
     for i in 0 to steps {
       let t = Float.fromInt(i) /. Float.fromInt(steps)
       let x = x1 +. (x2 -. x1) *. t
+      // sin(0) = 0 and sin(2π * 2) = 0, so wave starts and ends at center
       let wave = Js.Math.sin(t *. frequency *. Js.Math._PI *. 2.0) *. amplitude
       let y = centerY +. wave
 
@@ -70,6 +74,76 @@ let drawWavyLine = (
         let prevT = Float.fromInt(i - 1) /. Float.fromInt(steps)
         let prevX = x1 +. (x2 -. x1) *. prevT
         let prevWave = Js.Math.sin(prevT *. frequency *. Js.Math._PI *. 2.0) *. amplitude
+        let prevY = centerY +. prevWave
+        p->P5.line(prevX, prevY, x, y)
+      }
+    }
+  }
+}
+
+// Draw a noisy wavy line using Perlin noise for smooth organic variation
+let drawNoisyWave = (
+  p: P5.t,
+  x1: float,
+  y1: float,
+  x2: float,
+  y2: float,
+  isVertical: bool,
+) => {
+  // Use many points for smooth curves
+  let steps = 100
+
+  // Noise offset for this specific line (based on position)
+  let noiseOffset = (x1 +. y1) *. 0.01
+
+  if isVertical {
+    // Vertical noisy line - vary X based on Y using Perlin noise
+    let amplitude = (x2 -. x1) *. 0.3
+    let centerX = (x1 +. x2) /. 2.0
+
+    for i in 0 to steps {
+      let t = Float.fromInt(i) /. Float.fromInt(steps)
+      let y = y1 +. (y2 -. y1) *. t
+
+      // Use Perlin noise for smooth variation
+      let noiseVal = p->P5.noise(t *. 3.0 +. noiseOffset)
+      // Map noise from 0-1 to -1 to 1
+      let wave = (noiseVal -. 0.5) *. 2.0 *. amplitude
+      let x = centerX +. wave
+
+      if i == 0 {
+        ()
+      } else {
+        let prevT = Float.fromInt(i - 1) /. Float.fromInt(steps)
+        let prevY = y1 +. (y2 -. y1) *. prevT
+        let prevNoiseVal = p->P5.noise(prevT *. 3.0 +. noiseOffset)
+        let prevWave = (prevNoiseVal -. 0.5) *. 2.0 *. amplitude
+        let prevX = centerX +. prevWave
+        p->P5.line(prevX, prevY, x, y)
+      }
+    }
+  } else {
+    // Horizontal noisy line - vary Y based on X using Perlin noise
+    let amplitude = (y2 -. y1) *. 0.3
+    let centerY = (y1 +. y2) /. 2.0
+
+    for i in 0 to steps {
+      let t = Float.fromInt(i) /. Float.fromInt(steps)
+      let x = x1 +. (x2 -. x1) *. t
+
+      // Use Perlin noise for smooth variation
+      let noiseVal = p->P5.noise(t *. 3.0 +. noiseOffset)
+      // Map noise from 0-1 to -1 to 1
+      let wave = (noiseVal -. 0.5) *. 2.0 *. amplitude
+      let y = centerY +. wave
+
+      if i == 0 {
+        ()
+      } else {
+        let prevT = Float.fromInt(i - 1) /. Float.fromInt(steps)
+        let prevX = x1 +. (x2 -. x1) *. prevT
+        let prevNoiseVal = p->P5.noise(prevT *. 3.0 +. noiseOffset)
+        let prevWave = (prevNoiseVal -. 0.5) *. 2.0 *. amplitude
         let prevY = centerY +. prevWave
         p->P5.line(prevX, prevY, x, y)
       }
@@ -131,6 +205,7 @@ let rec drawTile = (
             p->P5.line(centerX, visibleTop, centerX, visibleBottom)
           }
         | Wavy => drawWavyLine(p, visibleLeft, visibleTop, visibleRight, visibleBottom, true)
+        | Noisy => drawNoisyWave(p, visibleLeft, visibleTop, visibleRight, visibleBottom, true)
         }
       } else {
         // Horizontal line
@@ -140,6 +215,7 @@ let rec drawTile = (
             p->P5.line(visibleLeft, centerY, visibleRight, centerY)
           }
         | Wavy => drawWavyLine(p, visibleLeft, visibleTop, visibleRight, visibleBottom, false)
+        | Noisy => drawNoisyWave(p, visibleLeft, visibleTop, visibleRight, visibleBottom, false)
         }
       }
     } else {
@@ -266,10 +342,17 @@ let setupControls = (p: P5.t) => {
         wavyOption->PlotterFrame.setTextContent("Wavy Lines (Sin Wave)")
         tileTypeSelect->PlotterFrame.appendChild(wavyOption)
 
+        let noisyOption = PlotterFrame.createElement("option")
+        noisyOption->PlotterFrame.setValue("noisy")
+        noisyOption->PlotterFrame.setTextContent("Noisy Waves (Random Amplitude)")
+        tileTypeSelect->PlotterFrame.appendChild(noisyOption)
+
         // Add change handler
         tileTypeSelect->PlotterFrame.addEventListener("change", () => {
           let value = tileTypeSelect->PlotterFrame.value
-          currentTileType := (value == "wavy" ? Wavy : Straight)
+          currentTileType := (
+            value == "wavy" ? Wavy : value == "noisy" ? Noisy : Straight
+          )
           redrawTiling()
         })
 

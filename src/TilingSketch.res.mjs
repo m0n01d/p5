@@ -19,7 +19,7 @@ var currentTileType = {
 
 function drawWavyLine(p, x1, y1, x2, y2, isVertical) {
   if (isVertical) {
-    var amplitude = (x2 - x1) * 0.3;
+    var amplitude = (x2 - x1) * 0.2;
     var centerX = (x1 + x2) / 2.0;
     for(var i = 0; i <= 50; ++i){
       var t = i / 50;
@@ -37,7 +37,7 @@ function drawWavyLine(p, x1, y1, x2, y2, isVertical) {
     }
     return ;
   }
-  var amplitude$1 = (y2 - y1) * 0.3;
+  var amplitude$1 = (y2 - y1) * 0.2;
   var centerY = (y1 + y2) / 2.0;
   for(var i$1 = 0; i$1 <= 50; ++i$1){
     var t$1 = i$1 / 50;
@@ -48,6 +48,49 @@ function drawWavyLine(p, x1, y1, x2, y2, isVertical) {
       var prevT$1 = (i$1 - 1 | 0) / 50;
       var prevX$1 = x1 + (x2 - x1) * prevT$1;
       var prevWave$1 = Math.sin(prevT$1 * 2.0 * Math.PI * 2.0) * amplitude$1;
+      var prevY$1 = centerY + prevWave$1;
+      p.line(prevX$1, prevY$1, x$1, y$1);
+    }
+    
+  }
+}
+
+function drawNoisyWave(p, x1, y1, x2, y2, isVertical) {
+  var noiseOffset = (x1 + y1) * 0.01;
+  if (isVertical) {
+    var amplitude = (x2 - x1) * 0.3;
+    var centerX = (x1 + x2) / 2.0;
+    for(var i = 0; i <= 100; ++i){
+      var t = i / 100;
+      var y = y1 + (y2 - y1) * t;
+      var noiseVal = p.noise(t * 3.0 + noiseOffset);
+      var wave = (noiseVal - 0.5) * 2.0 * amplitude;
+      var x = centerX + wave;
+      if (i !== 0) {
+        var prevT = (i - 1 | 0) / 100;
+        var prevY = y1 + (y2 - y1) * prevT;
+        var prevNoiseVal = p.noise(prevT * 3.0 + noiseOffset);
+        var prevWave = (prevNoiseVal - 0.5) * 2.0 * amplitude;
+        var prevX = centerX + prevWave;
+        p.line(prevX, prevY, x, y);
+      }
+      
+    }
+    return ;
+  }
+  var amplitude$1 = (y2 - y1) * 0.3;
+  var centerY = (y1 + y2) / 2.0;
+  for(var i$1 = 0; i$1 <= 100; ++i$1){
+    var t$1 = i$1 / 100;
+    var x$1 = x1 + (x2 - x1) * t$1;
+    var noiseVal$1 = p.noise(t$1 * 3.0 + noiseOffset);
+    var wave$1 = (noiseVal$1 - 0.5) * 2.0 * amplitude$1;
+    var y$1 = centerY + wave$1;
+    if (i$1 !== 0) {
+      var prevT$1 = (i$1 - 1 | 0) / 100;
+      var prevX$1 = x1 + (x2 - x1) * prevT$1;
+      var prevNoiseVal$1 = p.noise(prevT$1 * 3.0 + noiseOffset);
+      var prevWave$1 = (prevNoiseVal$1 - 0.5) * 2.0 * amplitude$1;
       var prevY$1 = centerY + prevWave$1;
       p.line(prevX$1, prevY$1, x$1, y$1);
     }
@@ -88,31 +131,43 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
       var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
       if (orientation === 0) {
         var match = currentTileType.contents;
-        if (match !== "Straight") {
-          return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
+        switch (match) {
+          case "Straight" :
+              var centerX = (visibleLeft$1 + visibleRight$1) / 2.0;
+              p.line(centerX, visibleTop$1, centerX, visibleBottom$1);
+              return ;
+          case "Wavy" :
+              return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
+          case "Noisy" :
+              return drawNoisyWave(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
+          
         }
-        var centerX = (visibleLeft$1 + visibleRight$1) / 2.0;
-        p.line(centerX, visibleTop$1, centerX, visibleBottom$1);
-        return ;
+      } else {
+        var match$1 = currentTileType.contents;
+        switch (match$1) {
+          case "Straight" :
+              var centerY = (visibleTop$1 + visibleBottom$1) / 2.0;
+              p.line(visibleLeft$1, centerY, visibleRight$1, centerY);
+              return ;
+          case "Wavy" :
+              return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
+          case "Noisy" :
+              return drawNoisyWave(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
+          
+        }
       }
-      var match$1 = currentTileType.contents;
-      if (match$1 !== "Straight") {
-        return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
-      }
-      var centerY = (visibleTop$1 + visibleBottom$1) / 2.0;
-      p.line(visibleLeft$1, centerY, visibleRight$1, centerY);
-      return ;
+    } else {
+      var s = size / 2.0;
+      var nextlevel = l - 1 | 0;
+      drawTile(p, x, y, s, nextlevel, canvasWidth, canvasHeight);
+      drawTile(p, x + s, y, s, nextlevel, canvasWidth, canvasHeight);
+      drawTile(p, x, y + s, s, nextlevel, canvasWidth, canvasHeight);
+      _l = nextlevel;
+      _size = s;
+      _y = y + s;
+      _x = x + s;
+      continue ;
     }
-    var s = size / 2.0;
-    var nextlevel = l - 1 | 0;
-    drawTile(p, x, y, s, nextlevel, canvasWidth, canvasHeight);
-    drawTile(p, x + s, y, s, nextlevel, canvasWidth, canvasHeight);
-    drawTile(p, x, y + s, s, nextlevel, canvasWidth, canvasHeight);
-    _l = nextlevel;
-    _size = s;
-    _y = y + s;
-    _x = x + s;
-    continue ;
   };
 }
 
@@ -193,9 +248,15 @@ function setupControls(p) {
     wavyOption.value = "wavy";
     wavyOption.textContent = "Wavy Lines (Sin Wave)";
     tileTypeSelect.appendChild(wavyOption);
+    var noisyOption = document.createElement("option");
+    noisyOption.value = "noisy";
+    noisyOption.textContent = "Noisy Waves (Random Amplitude)";
+    tileTypeSelect.appendChild(noisyOption);
     tileTypeSelect.addEventListener("change", (function () {
             var value = tileTypeSelect.value;
-            currentTileType.contents = value === "wavy" ? "Wavy" : "Straight";
+            currentTileType.contents = value === "wavy" ? "Wavy" : (
+                value === "noisy" ? "Noisy" : "Straight"
+              );
             redrawTiling();
           }));
     controlsDiv.appendChild(tileTypeSelect);
@@ -247,6 +308,7 @@ export {
   showDebugGrid ,
   currentTileType ,
   drawWavyLine ,
+  drawNoisyWave ,
   drawTile ,
   p5Instance ,
   paperSize ,
