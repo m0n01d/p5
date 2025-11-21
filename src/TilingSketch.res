@@ -9,6 +9,74 @@ let currentLevel = ref(4)
 // Debug grid toggle
 let showDebugGrid = ref(false)
 
+// Tile type: "straight" or "wavy"
+type tileType = Straight | Wavy
+let currentTileType = ref(Straight)
+
+// Draw a wavy line using sin wave
+let drawWavyLine = (
+  p: P5.t,
+  x1: float,
+  y1: float,
+  x2: float,
+  y2: float,
+  isVertical: bool,
+) => {
+  // Use many more points for smooth curves
+  let steps = 50
+
+  if isVertical {
+    // Vertical wavy line - vary X based on Y
+    let amplitude = (x2 -. x1) *. 0.3 // Wave amplitude is 30% of tile width
+    let frequency = 2.0 // Two complete waves
+    let centerX = (x1 +. x2) /. 2.0
+
+    for i in 0 to steps {
+      let t = Float.fromInt(i) /. Float.fromInt(steps)
+      let y = y1 +. (y2 -. y1) *. t
+      let wave = Js.Math.sin(t *. frequency *. Js.Math._PI *. 2.0) *. amplitude
+      let x = centerX +. wave
+
+      if i == 0 {
+        // First point - move to start
+        // No line drawn yet
+        ()
+      } else {
+        // Draw line from previous point to current point
+        let prevT = Float.fromInt(i - 1) /. Float.fromInt(steps)
+        let prevY = y1 +. (y2 -. y1) *. prevT
+        let prevWave = Js.Math.sin(prevT *. frequency *. Js.Math._PI *. 2.0) *. amplitude
+        let prevX = centerX +. prevWave
+        p->P5.line(prevX, prevY, x, y)
+      }
+    }
+  } else {
+    // Horizontal wavy line - vary Y based on X
+    let amplitude = (y2 -. y1) *. 0.3 // Wave amplitude is 30% of tile height
+    let frequency = 2.0 // Two complete waves
+    let centerY = (y1 +. y2) /. 2.0
+
+    for i in 0 to steps {
+      let t = Float.fromInt(i) /. Float.fromInt(steps)
+      let x = x1 +. (x2 -. x1) *. t
+      let wave = Js.Math.sin(t *. frequency *. Js.Math._PI *. 2.0) *. amplitude
+      let y = centerY +. wave
+
+      if i == 0 {
+        // First point - move to start
+        ()
+      } else {
+        // Draw line from previous point to current point
+        let prevT = Float.fromInt(i - 1) /. Float.fromInt(steps)
+        let prevX = x1 +. (x2 -. x1) *. prevT
+        let prevWave = Js.Math.sin(prevT *. frequency *. Js.Math._PI *. 2.0) *. amplitude
+        let prevY = centerY +. prevWave
+        p->P5.line(prevX, prevY, x, y)
+      }
+    }
+  }
+}
+
 // Draw a single tile at position (x, y)
 // canvasWidth and canvasHeight are the actual drawable area bounds
 let rec drawTile = (
@@ -47,30 +115,33 @@ let rec drawTile = (
 
       p->P5.stroke(0)
       p->P5.strokeWeight(1)
+      p->P5.noFill
 
-    if orientation == 0 {
-      // Vertical line - clipped to visible portion of tile
       // Clip tile boundaries to canvas
       let visibleLeft = x > 0.0 ? x : 0.0
       let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
       let visibleTop = y > 0.0 ? y : 0.0
       let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
 
-      // Center X based on visible width
-      let centerX = (visibleLeft +. visibleRight) /. 2.0
-      p->P5.line(centerX, visibleTop, centerX, visibleBottom)
-    } else {
-      // Horizontal line - clipped to visible portion of tile
-      // Clip tile boundaries to canvas
-      let visibleLeft = x > 0.0 ? x : 0.0
-      let visibleRight = x +. size < canvasWidth ? x +. size : canvasWidth
-      let visibleTop = y > 0.0 ? y : 0.0
-      let visibleBottom = y +. size < canvasHeight ? y +. size : canvasHeight
-
-      // Center Y based on visible height
-      let centerY = (visibleTop +. visibleBottom) /. 2.0
-      p->P5.line(visibleLeft, centerY, visibleRight, centerY)
-    }
+      if orientation == 0 {
+        // Vertical line
+        switch currentTileType.contents {
+        | Straight => {
+            let centerX = (visibleLeft +. visibleRight) /. 2.0
+            p->P5.line(centerX, visibleTop, centerX, visibleBottom)
+          }
+        | Wavy => drawWavyLine(p, visibleLeft, visibleTop, visibleRight, visibleBottom, true)
+        }
+      } else {
+        // Horizontal line
+        switch currentTileType.contents {
+        | Straight => {
+            let centerY = (visibleTop +. visibleBottom) /. 2.0
+            p->P5.line(visibleLeft, centerY, visibleRight, centerY)
+          }
+        | Wavy => drawWavyLine(p, visibleLeft, visibleTop, visibleRight, visibleBottom, false)
+        }
+      }
     } else {
     let s = size /. 2.0
     let nextlevel = l - 1
@@ -170,6 +241,39 @@ let setupControls = (p: P5.t) => {
         })
 
         container->PlotterFrame.appendChild(levelInput)
+
+        // Tile type selector
+        let tileTypeLabel = PlotterFrame.createElement("label")
+        tileTypeLabel->PlotterFrame.setTextContent("Line Type")
+        tileTypeLabel->PlotterFrame.setAttribute("for", "tile-type")
+        tileTypeLabel->PlotterFrame.setClassName("block text-sm font-medium text-zinc-300 mb-1 mt-3")
+        container->PlotterFrame.appendChild(tileTypeLabel)
+
+        let tileTypeSelect = PlotterFrame.createElement("select")
+        tileTypeSelect->PlotterFrame.setAttribute("id", "tile-type")
+        tileTypeSelect->PlotterFrame.setClassName(
+          "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+        )
+
+        // Add options
+        let straightOption = PlotterFrame.createElement("option")
+        straightOption->PlotterFrame.setValue("straight")
+        straightOption->PlotterFrame.setTextContent("Straight Lines")
+        tileTypeSelect->PlotterFrame.appendChild(straightOption)
+
+        let wavyOption = PlotterFrame.createElement("option")
+        wavyOption->PlotterFrame.setValue("wavy")
+        wavyOption->PlotterFrame.setTextContent("Wavy Lines (Sin Wave)")
+        tileTypeSelect->PlotterFrame.appendChild(wavyOption)
+
+        // Add change handler
+        tileTypeSelect->PlotterFrame.addEventListener("change", () => {
+          let value = tileTypeSelect->PlotterFrame.value
+          currentTileType := (value == "wavy" ? Wavy : Straight)
+          redrawTiling()
+        })
+
+        container->PlotterFrame.appendChild(tileTypeSelect)
 
         // Debug grid toggle
         let debugLabel = PlotterFrame.createElement("label")

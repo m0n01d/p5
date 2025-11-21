@@ -13,6 +13,48 @@ var showDebugGrid = {
   contents: false
 };
 
+var currentTileType = {
+  contents: "Straight"
+};
+
+function drawWavyLine(p, x1, y1, x2, y2, isVertical) {
+  if (isVertical) {
+    var amplitude = (x2 - x1) * 0.3;
+    var centerX = (x1 + x2) / 2.0;
+    for(var i = 0; i <= 50; ++i){
+      var t = i / 50;
+      var y = y1 + (y2 - y1) * t;
+      var wave = Math.sin(t * 2.0 * Math.PI * 2.0) * amplitude;
+      var x = centerX + wave;
+      if (i !== 0) {
+        var prevT = (i - 1 | 0) / 50;
+        var prevY = y1 + (y2 - y1) * prevT;
+        var prevWave = Math.sin(prevT * 2.0 * Math.PI * 2.0) * amplitude;
+        var prevX = centerX + prevWave;
+        p.line(prevX, prevY, x, y);
+      }
+      
+    }
+    return ;
+  }
+  var amplitude$1 = (y2 - y1) * 0.3;
+  var centerY = (y1 + y2) / 2.0;
+  for(var i$1 = 0; i$1 <= 50; ++i$1){
+    var t$1 = i$1 / 50;
+    var x$1 = x1 + (x2 - x1) * t$1;
+    var wave$1 = Math.sin(t$1 * 2.0 * Math.PI * 2.0) * amplitude$1;
+    var y$1 = centerY + wave$1;
+    if (i$1 !== 0) {
+      var prevT$1 = (i$1 - 1 | 0) / 50;
+      var prevX$1 = x1 + (x2 - x1) * prevT$1;
+      var prevWave$1 = Math.sin(prevT$1 * 2.0 * Math.PI * 2.0) * amplitude$1;
+      var prevY$1 = centerY + prevWave$1;
+      p.line(prevX$1, prevY$1, x$1, y$1);
+    }
+    
+  }
+}
+
 function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
   while(true) {
     var l = _l;
@@ -39,21 +81,26 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
       var orientation = p.random(0.0, 2.0) | 0;
       p.stroke(0);
       p.strokeWeight(1);
+      p.noFill();
+      var visibleLeft$1 = x > 0.0 ? x : 0.0;
+      var visibleRight$1 = x + size < canvasWidth ? x + size : canvasWidth;
+      var visibleTop$1 = y > 0.0 ? y : 0.0;
+      var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
       if (orientation === 0) {
-        var visibleLeft$1 = x > 0.0 ? x : 0.0;
-        var visibleRight$1 = x + size < canvasWidth ? x + size : canvasWidth;
-        var visibleTop$1 = y > 0.0 ? y : 0.0;
-        var visibleBottom$1 = y + size < canvasHeight ? y + size : canvasHeight;
+        var match = currentTileType.contents;
+        if (match !== "Straight") {
+          return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
+        }
         var centerX = (visibleLeft$1 + visibleRight$1) / 2.0;
         p.line(centerX, visibleTop$1, centerX, visibleBottom$1);
         return ;
       }
-      var visibleLeft$2 = x > 0.0 ? x : 0.0;
-      var visibleRight$2 = x + size < canvasWidth ? x + size : canvasWidth;
-      var visibleTop$2 = y > 0.0 ? y : 0.0;
-      var visibleBottom$2 = y + size < canvasHeight ? y + size : canvasHeight;
-      var centerY = (visibleTop$2 + visibleBottom$2) / 2.0;
-      p.line(visibleLeft$2, centerY, visibleRight$2, centerY);
+      var match$1 = currentTileType.contents;
+      if (match$1 !== "Straight") {
+        return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
+      }
+      var centerY = (visibleTop$1 + visibleBottom$1) / 2.0;
+      p.line(visibleLeft$1, centerY, visibleRight$1, centerY);
       return ;
     }
     var s = size / 2.0;
@@ -130,6 +177,28 @@ function setupControls(p) {
             redrawTiling();
           }));
     controlsDiv.appendChild(levelInput);
+    var tileTypeLabel = document.createElement("label");
+    tileTypeLabel.textContent = "Line Type";
+    tileTypeLabel.setAttribute("for", "tile-type");
+    tileTypeLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
+    controlsDiv.appendChild(tileTypeLabel);
+    var tileTypeSelect = document.createElement("select");
+    tileTypeSelect.setAttribute("id", "tile-type");
+    tileTypeSelect.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+    var straightOption = document.createElement("option");
+    straightOption.value = "straight";
+    straightOption.textContent = "Straight Lines";
+    tileTypeSelect.appendChild(straightOption);
+    var wavyOption = document.createElement("option");
+    wavyOption.value = "wavy";
+    wavyOption.textContent = "Wavy Lines (Sin Wave)";
+    tileTypeSelect.appendChild(wavyOption);
+    tileTypeSelect.addEventListener("change", (function () {
+            var value = tileTypeSelect.value;
+            currentTileType.contents = value === "wavy" ? "Wavy" : "Straight";
+            redrawTiling();
+          }));
+    controlsDiv.appendChild(tileTypeSelect);
     var debugLabel = document.createElement("label");
     debugLabel.className = "flex items-center mt-3 cursor-pointer";
     var debugCheckbox = document.createElement("input");
@@ -176,6 +245,8 @@ export {
   tileSize ,
   currentLevel ,
   showDebugGrid ,
+  currentTileType ,
+  drawWavyLine ,
   drawTile ,
   p5Instance ,
   paperSize ,
