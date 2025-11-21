@@ -29,12 +29,19 @@ type t
 
 // Canvas functions
 @send external createCanvas: (t, int, int) => t = "createCanvas"
+@send external createCanvasSVG: (t, int, int, string) => t = "createCanvas"
 @send external createCanvasWebGL: (t, int, int, string) => t = "createCanvas"
 @send external parent: (t, string) => t = "parent"
 @send external resizeCanvas: (t, int, int) => unit = "resizeCanvas"
 
+// SVG export (requires p5.js-svg)
+@send external saveSVG: (t, string) => unit = "save"
+
 // WEBGL constant
 @get external _WEBGL: t => string = "WEBGL"
+
+// SVG constant (from p5.js-svg) - accessed via window
+@get @scope("window") external _SVG: t => string = "SVG"
 
 // Math functions
 @send external random: (t, float) => float = "random"
@@ -60,7 +67,7 @@ type t
 @send external ellipseMode: (t, int) => unit = "ellipseMode"
 
 // Canvas export functions
-@send external saveCanvas: (t, string, string) => unit = "saveCanvas"
+@send external saveCanvas: (t, string, string) => unit = "save"
 @get external canvas: t => Dom.element = "canvas"
 
 // Sketch lifecycle functions
@@ -68,7 +75,7 @@ type t
 @set external setDraw: (t, unit => unit) => unit = "draw"
 @set external setMousePressed: (t, unit => unit) => unit = "mousePressed"
 @set external setMouseClicked: (t, unit => unit) => unit = "mouseClicked"
-@get external getSetup: t => (unit => unit) = "setup"
+@get external getSetup: t => unit => unit = "setup"
 
 // Frame rate control
 @send external frameRate: (t, float) => unit = "frameRate"

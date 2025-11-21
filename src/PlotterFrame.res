@@ -186,7 +186,6 @@ let createPlotterSketch = (drawFn: drawFn) => {
         }
       }
 
-
       // Create margin and padding controls
       let createSpacingControls = () => {
         let controlsDiv = getElementById("paper-settings-controls")
@@ -211,7 +210,9 @@ let createPlotterSketch = (drawFn: drawFn) => {
             marginInput->setAttribute("min", "0")
             marginInput->setAttribute("max", "50")
             marginInput->setAttribute("step", "1")
-            marginInput->setClassName("w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500")
+            marginInput->setClassName(
+              "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+            )
 
             marginInput->addEventListener("input", () => {
               let value = marginInput->value->Float.fromString->Option.getOr(10.0)
@@ -235,7 +236,9 @@ let createPlotterSketch = (drawFn: drawFn) => {
             paddingInput->setAttribute("min", "0")
             paddingInput->setAttribute("max", "50")
             paddingInput->setAttribute("step", "1")
-            paddingInput->setClassName("w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500")
+            paddingInput->setClassName(
+              "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+            )
 
             paddingInput->addEventListener("input", () => {
               let value = paddingInput->value->Float.fromString->Option.getOr(5.0)
@@ -299,8 +302,8 @@ let createPlotterSketch = (drawFn: drawFn) => {
         p->P5.rect(
           marginPx,
           marginPx,
-          (currentSize.contents.width->Int.toFloat -. marginPx *. 2.0),
-          (currentSize.contents.height->Int.toFloat -. marginPx *. 2.0),
+          currentSize.contents.width->Int.toFloat -. marginPx *. 2.0,
+          currentSize.contents.height->Int.toFloat -. marginPx *. 2.0,
         )
 
         // Draw padding border (darker gray) - safe drawing area
@@ -310,8 +313,8 @@ let createPlotterSketch = (drawFn: drawFn) => {
           p->P5.rect(
             totalSpacePx,
             totalSpacePx,
-            (currentSize.contents.width->Int.toFloat -. totalSpacePx *. 2.0),
-            (currentSize.contents.height->Int.toFloat -. totalSpacePx *. 2.0),
+            currentSize.contents.width->Int.toFloat -. totalSpacePx *. 2.0,
+            currentSize.contents.height->Int.toFloat -. totalSpacePx *. 2.0,
           )
         }
 

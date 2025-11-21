@@ -3,7 +3,6 @@
 import * as Core__Int from "@rescript/core/src/Core__Int.res.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 import * as Core__Option from "@rescript/core/src/Core__Option.res.mjs";
-import * as PlotterFrame from "./PlotterFrame.res.mjs";
 
 var state = {
   contents: {
@@ -141,39 +140,24 @@ function exportCurrentSketch() {
   var canvas = p5.canvas;
   var timestamp = (new Date().toISOString());
   var filename = timestamp + "." + format;
-  if (format === "png") {
-    var dataUrl = canvas.toDataURL("image/png", 1.0);
-    var link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = filename;
-    var linkStyle = link.style;
-    linkStyle.display = "none";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    return ;
+  if (format !== "png") {
+    if (format === "svg") {
+      p5.save(filename, "svg");
+      console.log("Saved SVG: " + filename);
+      return ;
+    } else {
+      return ;
+    }
   }
-  if (format !== "svg") {
-    return ;
-  }
-  var dataUrl$1 = canvas.toDataURL("image/png", 1.0);
-  var widthPx = p5.width;
-  var heightPx = p5.height;
-  var paperSize = PlotterFrame.getCurrentPaperSize();
-  var widthMm = paperSize.widthMm.toString();
-  var heightMm = paperSize.heightMm.toString();
-  var svgContent = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"\n     width=\"" + widthMm + "mm\" height=\"" + heightMm + "mm\"\n     viewBox=\"0 0 " + widthPx.toString() + " " + heightPx.toString() + "\">\n  <image width=\"" + widthPx.toString() + "\" height=\"" + heightPx.toString() + "\" xlink:href=\"" + dataUrl$1 + "\"/>\n</svg>";
-  var blob = ((content) => new Blob([content], {type: 'image/svg+xml'}))(svgContent);
-  var url = ((b) => URL.createObjectURL(b))(blob);
-  var link$1 = document.createElement("a");
-  link$1.href = url;
-  link$1.download = filename;
-  var linkStyle$1 = link$1.style;
-  linkStyle$1.display = "none";
-  document.body.appendChild(link$1);
-  link$1.click();
-  document.body.removeChild(link$1);
-  (((u) => URL.revokeObjectURL(u))(url));
+  var dataUrl = canvas.toDataURL("image/png", 1.0);
+  var link = document.createElement("a");
+  link.href = dataUrl;
+  link.download = filename;
+  var linkStyle = link.style;
+  linkStyle.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }
 
 function registerSketch(name, importPath) {
@@ -217,4 +201,4 @@ export {
   registerSketch ,
   init ,
 }
-/* PlotterFrame Not a pure module */
+/* No side effect */

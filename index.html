@@ -21,17 +21,24 @@
       <!-- Main Content Area -->
       <div class="flex-1 flex overflow-hidden">
         <!-- Canvas Area (Left/Center) -->
-        <main class="flex-1 flex items-center justify-center p-8 overflow-hidden">
+        <main
+          class="flex-1 flex items-center justify-center p-8 overflow-hidden"
+        >
           <div id="sketch" class="bg-white"></div>
         </main>
 
         <!-- Controls Sidebar (Right) -->
-        <aside class="w-80 bg-zinc-800 border-l border-zinc-700 p-6 overflow-y-auto">
+        <aside
+          class="w-80 bg-zinc-800 border-l border-zinc-700 p-6 overflow-y-auto"
+        >
           <h2 class="text-lg font-semibold mb-4 text-zinc-100">Controls</h2>
 
           <!-- Paper Size Controls -->
           <div class="mb-6">
-            <label for="paper-size" class="block text-sm font-medium text-zinc-300 mb-2">
+            <label
+              for="paper-size"
+              class="block text-sm font-medium text-zinc-300 mb-2"
+            >
               Paper Size
             </label>
             <select
@@ -48,13 +55,25 @@
                 <option value="Square">Square (300 × 300 mm)</option>
               </optgroup>
               <optgroup label="iPhone Wallpapers">
-                <option value="iPhone 15 Pro Max">iPhone 15 Pro Max (1290 × 2796)</option>
-                <option value="iPhone 15 Pro">iPhone 15 Pro (1179 × 2556)</option>
-                <option value="iPhone 15 Plus">iPhone 15 Plus (1290 × 2796)</option>
+                <option value="iPhone 15 Pro Max">
+                  iPhone 15 Pro Max (1290 × 2796)
+                </option>
+                <option value="iPhone 15 Pro">
+                  iPhone 15 Pro (1179 × 2556)
+                </option>
+                <option value="iPhone 15 Plus">
+                  iPhone 15 Plus (1290 × 2796)
+                </option>
                 <option value="iPhone 15">iPhone 15 (1179 × 2556)</option>
-                <option value="iPhone 14 Pro Max">iPhone 14 Pro Max (1290 × 2796)</option>
-                <option value="iPhone 14 Pro">iPhone 14 Pro (1179 × 2556)</option>
-                <option value="iPhone 14 Plus">iPhone 14 Plus (1284 × 2778)</option>
+                <option value="iPhone 14 Pro Max">
+                  iPhone 14 Pro Max (1290 × 2796)
+                </option>
+                <option value="iPhone 14 Pro">
+                  iPhone 14 Pro (1179 × 2556)
+                </option>
+                <option value="iPhone 14 Plus">
+                  iPhone 14 Plus (1284 × 2778)
+                </option>
                 <option value="iPhone 14">iPhone 14 (1170 × 2532)</option>
                 <option value="iPhone SE">iPhone SE (750 × 1334)</option>
               </optgroup>
@@ -64,9 +83,12 @@
             </select>
 
             <!-- Custom Size Inputs -->
-            <div id="custom-size" class="mt-3 space-y-3" style="display: none;">
+            <div id="custom-size" class="mt-3 space-y-3" style="display: none">
               <div>
-                <label for="custom-width" class="block text-xs text-zinc-400 mb-1">
+                <label
+                  for="custom-width"
+                  class="block text-xs text-zinc-400 mb-1"
+                >
                   Width (mm)
                 </label>
                 <input
@@ -79,7 +101,10 @@
                 />
               </div>
               <div>
-                <label for="custom-height" class="block text-xs text-zinc-400 mb-1">
+                <label
+                  for="custom-height"
+                  class="block text-xs text-zinc-400 mb-1"
+                >
                   Height (mm)
                 </label>
                 <input

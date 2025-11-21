@@ -4,6 +4,9 @@ console.log('Initializing sketches with lazy loading...');
 // Import Tailwind CSS
 import './style.css';
 
+// Import p5.js-svg for SVG export support
+import 'p5.js-svg';
+
 // Import only the sketch manager
 import { registerSketch, init } from './SketchManager.res.mjs';
 
