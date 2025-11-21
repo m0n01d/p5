@@ -41,6 +41,13 @@ type date
 // Window bindings
 @val @scope("window") external currentP5Instance: P5.t = "__currentP5Instance"
 
+// String manipulation bindings
+type regExp
+@new external makeRegExp: string => regExp = "RegExp"
+@send external match: (string, regExp) => Js.Nullable.t<array<string>> = "match"
+@send
+external replace: (string, regExp, string => string) => string = "replace"
+
 @set external setTextContent: (Dom.element, string) => unit = "textContent"
 @set external setClassName: (Dom.element, string) => unit = "className"
 @set external setInnerHTML: (Dom.element, string) => unit = "innerHTML"
@@ -240,31 +247,29 @@ let exportCurrentSketch = () => {
 
             // Add physical dimensions in mm for plotter software
             // Replace width and height attributes with mm units while preserving viewBox
-            let enhancedSvg = %raw(`
-              (function(svgStr, widthMm, heightMm) {
-                // Add width/height in mm and preserve viewBox for coordinate system
-                return svgStr.replace(
-                  /<svg([^>]*)>/,
-                  function(match, attrs) {
-                    // Extract viewBox if it exists
-                    const viewBoxMatch = attrs.match(/viewBox="([^"]+)"/);
-                    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
+            let enhancedSvg = {
+              let svgTagRegex = makeRegExp("<svg([^>]*)>")
+              svgContent->replace(svgTagRegex, attrs => {
+                // Extract viewBox if it exists
+                let viewBoxRegex = makeRegExp("viewBox=\"([^\"]+)\"")
+                let viewBoxMatch = attrs->match(viewBoxRegex)
 
-                    // Build new SVG tag with mm units
-                    let newAttrs = ' version="1.1"';
-                    newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
-                    newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
-                    newAttrs += ' width="' + widthMm + 'mm"';
-                    newAttrs += ' height="' + heightMm + 'mm"';
-                    if (viewBox) {
-                      newAttrs += ' viewBox="' + viewBox + '"';
+                let viewBoxAttr = switch viewBoxMatch->Js.Nullable.toOption {
+                | Some(matches) =>
+                    switch matches[1] {
+                    | Some(vb) => ` viewBox="${vb}"`
+                    | None => ""
                     }
+                | None => ""
+                }
 
-                    return '<svg' + newAttrs + '>';
-                  }
-                );
+                // Build new SVG tag with mm units
+                let widthMmStr = paperSize.widthMm->Float.toString
+                let heightMmStr = paperSize.heightMm->Float.toString
+
+                `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${widthMmStr}mm" height="${heightMmStr}mm"${viewBoxAttr}>`
               })
-            `)(svgContent, paperSize.widthMm, paperSize.heightMm)
+            }
 
             let blobOpts: P5.blobOptions = {\"type": "image/svg+xml"}
             let blob = P5.createBlob([enhancedSvg], blobOpts)

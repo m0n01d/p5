@@ -161,29 +161,21 @@ function exportCurrentSketch() {
   if (svgElement !== undefined) {
     var paperSize = PlotterFrame.getCurrentPaperSize();
     var svgContent = Caml_option.valFromOption(svgElement).outerHTML;
-    var enhancedSvg = ((function(svgStr, widthMm, heightMm) {
-                // Add width/height in mm and preserve viewBox for coordinate system
-                return svgStr.replace(
-                  /<svg([^>]*)>/,
-                  function(match, attrs) {
-                    // Extract viewBox if it exists
-                    const viewBoxMatch = attrs.match(/viewBox="([^"]+)"/);
-                    const viewBox = viewBoxMatch ? viewBoxMatch[1] : null;
-
-                    // Build new SVG tag with mm units
-                    let newAttrs = ' version="1.1"';
-                    newAttrs += ' xmlns="http://www.w3.org/2000/svg"';
-                    newAttrs += ' xmlns:xlink="http://www.w3.org/1999/xlink"';
-                    newAttrs += ' width="' + widthMm + 'mm"';
-                    newAttrs += ' height="' + heightMm + 'mm"';
-                    if (viewBox) {
-                      newAttrs += ' viewBox="' + viewBox + '"';
-                    }
-
-                    return '<svg' + newAttrs + '>';
-                  }
-                );
-              }))(svgContent, paperSize.widthMm, paperSize.heightMm);
+    var svgTagRegex = new RegExp("<svg([^>]*)>");
+    var enhancedSvg = svgContent.replace(svgTagRegex, (function (attrs) {
+            var viewBoxRegex = new RegExp("viewBox=\"([^\"]+)\"");
+            var viewBoxMatch = attrs.match(viewBoxRegex);
+            var viewBoxAttr;
+            if (viewBoxMatch == null) {
+              viewBoxAttr = "";
+            } else {
+              var vb = viewBoxMatch[1];
+              viewBoxAttr = vb !== undefined ? " viewBox=\"" + vb + "\"" : "";
+            }
+            var widthMmStr = paperSize.widthMm.toString();
+            var heightMmStr = paperSize.heightMm.toString();
+            return "<svg version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"" + widthMmStr + "mm\" height=\"" + heightMmStr + "mm\"" + viewBoxAttr + ">";
+          }));
     var blob = new Blob([enhancedSvg], {
           type: "image/svg+xml"
         });
