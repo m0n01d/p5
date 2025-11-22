@@ -102,6 +102,16 @@ type t
 @val @scope("document")
 external getElementsByTagName: string => array<Dom.element> = "getElementsByTagName"
 
+// Image type and functions
+type image
+@send external loadImage: (t, string, image => unit) => unit = "loadImage"
+@send external imageGet: (image, int, int) => int = "get"
+@get external imageWidth: image => int = "width"
+@get external imageHeight: image => int = "height"
+@send external brightness: (t, int) => float = "brightness"
+@send external image: (t, image, float, float, float, float) => unit = "image"
+@get external imageCanvas: image => Dom.element = "canvas"
+
 @get external outerHTML: Dom.element => string = "outerHTML"
 
 // Blob for file creation

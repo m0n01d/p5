@@ -10,18 +10,11 @@ let currentLevel = ref(4)
 let showDebugGrid = ref(false)
 
 // Tile type: "straight", "wavy", or "noisy"
-type tileType = Straight | Wavy | Noisy
+type tileType = Straight | Wavy | Noisy | Arc
 let currentTileType = ref(Straight)
 
 // Draw a wavy line using sin wave that connects smoothly to adjacent tiles
-let drawWavyLine = (
-  p: P5.t,
-  x1: float,
-  y1: float,
-  x2: float,
-  y2: float,
-  isVertical: bool,
-) => {
+let drawWavyLine = (p: P5.t, x1: float, y1: float, x2: float, y2: float, isVertical: bool) => {
   // Use many more points for smooth curves
   let steps = 50
 
@@ -82,14 +75,7 @@ let drawWavyLine = (
 }
 
 // Draw a noisy wavy line using Perlin noise for smooth organic variation
-let drawNoisyWave = (
-  p: P5.t,
-  x1: float,
-  y1: float,
-  x2: float,
-  y2: float,
-  isVertical: bool,
-) => {
+let drawNoisyWave = (p: P5.t, x1: float, y1: float, x2: float, y2: float, isVertical: bool) => {
   // Use many points for smooth curves
   let steps = 100
 
@@ -219,16 +205,16 @@ let rec drawTile = (
         }
       }
     } else {
-    let s = size /. 2.0
-    let nextlevel = l - 1
-    // Top-left quadrant
-    drawTile(p, x, y, s, nextlevel, canvasWidth, canvasHeight)
-    // Top-right quadrant
-    drawTile(p, x +. s, y, s, nextlevel, canvasWidth, canvasHeight)
-    // Bottom-left quadrant
-    drawTile(p, x, y +. s, s, nextlevel, canvasWidth, canvasHeight)
-    // Bottom-right quadrant
-    drawTile(p, x +. s, y +. s, s, nextlevel, canvasWidth, canvasHeight)
+      let s = size /. 2.0
+      let nextlevel = l - 1
+      // Top-left quadrant
+      drawTile(p, x, y, s, nextlevel, canvasWidth, canvasHeight)
+      // Top-right quadrant
+      drawTile(p, x +. s, y, s, nextlevel, canvasWidth, canvasHeight)
+      // Bottom-left quadrant
+      drawTile(p, x, y +. s, s, nextlevel, canvasWidth, canvasHeight)
+      // Bottom-right quadrant
+      drawTile(p, x +. s, y +. s, s, nextlevel, canvasWidth, canvasHeight)
     }
   }
 }
@@ -240,12 +226,10 @@ let paperSize: ref<option<PlotterFrame.paperSize>> = ref(None)
 // Redraw function - redraws by triggering PlotterFrame's draw cycle ONCE
 let redrawTiling = () => {
   switch p5Instance.contents {
-  | Some(p) => {
-      // Trigger one frame of the draw cycle
-      p->P5.loop
-      // PlotterFrame's draw will call drawWithControls which calls draw()
-      // draw() will call noLoop again after drawing
-    }
+  | Some(p) => // Trigger one frame of the draw cycle
+    p->P5.loop
+    // PlotterFrame's draw will call drawWithControls which calls draw()
+    // draw() will call noLoop again after drawing
   | None => ()
   }
 }
@@ -322,7 +306,9 @@ let setupControls = (p: P5.t) => {
         let tileTypeLabel = PlotterFrame.createElement("label")
         tileTypeLabel->PlotterFrame.setTextContent("Line Type")
         tileTypeLabel->PlotterFrame.setAttribute("for", "tile-type")
-        tileTypeLabel->PlotterFrame.setClassName("block text-sm font-medium text-zinc-300 mb-1 mt-3")
+        tileTypeLabel->PlotterFrame.setClassName(
+          "block text-sm font-medium text-zinc-300 mb-1 mt-3",
+        )
         container->PlotterFrame.appendChild(tileTypeLabel)
 
         let tileTypeSelect = PlotterFrame.createElement("select")
@@ -350,9 +336,8 @@ let setupControls = (p: P5.t) => {
         // Add change handler
         tileTypeSelect->PlotterFrame.addEventListener("change", () => {
           let value = tileTypeSelect->PlotterFrame.value
-          currentTileType := (
-            value == "wavy" ? Wavy : value == "noisy" ? Noisy : Straight
-          )
+          currentTileType := (value == "wavy" ? Wavy : value == "noisy" ? Noisy : Straight)
+
           redrawTiling()
         })
 

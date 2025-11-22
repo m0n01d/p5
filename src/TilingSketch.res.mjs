@@ -140,6 +140,16 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
               return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
           case "Noisy" :
               return drawNoisyWave(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, true);
+          case "Arc" :
+              throw {
+                    RE_EXN_ID: "Match_failure",
+                    _1: [
+                      "TilingSketch.res",
+                      188,
+                      8
+                    ],
+                    Error: new Error()
+                  };
           
         }
       } else {
@@ -153,6 +163,16 @@ function drawTile(p, _x, _y, _size, _l, canvasWidth, canvasHeight) {
               return drawWavyLine(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
           case "Noisy" :
               return drawNoisyWave(p, visibleLeft$1, visibleTop$1, visibleRight$1, visibleBottom$1, false);
+          case "Arc" :
+              throw {
+                    RE_EXN_ID: "Match_failure",
+                    _1: [
+                      "TilingSketch.res",
+                      198,
+                      8
+                    ],
+                    Error: new Error()
+                  };
           
         }
       }

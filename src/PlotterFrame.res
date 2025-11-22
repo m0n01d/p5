@@ -59,9 +59,17 @@ external createElement: string => Dom.element = "createElement"
 @set external setInnerHTML: (Dom.element, string) => unit = "innerHTML"
 @send external setAttribute: (Dom.element, string, string) => unit = "setAttribute"
 @send external appendChild: (Dom.element, Dom.element) => unit = "appendChild"
+@send external querySelector: (Dom.element, string) => Js.Nullable.t<Dom.element> = "querySelector"
 
 @send
 external addEventListener: (Dom.element, string, unit => unit) => unit = "addEventListener"
+
+// Style manipulation
+let setStyle: (Dom.element, string, string) => unit = %raw(`
+  function(element, property, value) {
+    element.style[property] = value;
+  }
+`)
 
 // Timer binding
 @val external setTimeout: (unit => unit, int) => float = "setTimeout"

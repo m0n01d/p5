@@ -23,6 +23,7 @@ registerSketch('Wave Function Collapse - Wood Grain', './WFCWoodGrainSketch.res.
 registerSketch('Grid - Tiled Shapes', './GridSketch.res.mjs');
 registerSketch('Wavy Lines - Center Focus', './WavyLinesSketch.res.mjs');
 registerSketch('Tiling Pattern', './TilingSketch.res.mjs');
+registerSketch('Wavy Image Halftone', './WavyImageSketch.res.mjs');
 
 // Initialize the sketch manager
 init();

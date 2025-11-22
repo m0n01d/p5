@@ -109,6 +109,10 @@ function customPaperSize(widthMm, heightMm) {
         };
 }
 
+var setStyle = (function(element, property, value) {
+    element.style[property] = value;
+  });
+
 var currentPaperSize = {
   contents: getPaperSize("A4")
 };
@@ -304,6 +308,7 @@ export {
   mmToPixels ,
   getPaperSize ,
   customPaperSize ,
+  setStyle ,
   currentPaperSize ,
   currentMarginMm ,
   currentPaddingMm ,
