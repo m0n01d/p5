@@ -52,9 +52,9 @@ function switchToSketch(index) {
   var config = state.contents.sketches[index];
   if (config !== undefined) {
     console.log("Dynamically loading sketch: " + config.name);
-    (((function(importPath, sketchName) {
+    (((function(loader, sketchName) {
           Promise.all([
-            import(importPath),
+            loader(),
             import('p5')
           ])
             .then(([sketchModule, p5Module]) => {
@@ -77,7 +77,7 @@ function switchToSketch(index) {
               console.error('Failed to load sketch:', err);
               window.__sketchLoadError = err;
             });
-        }))(config.importPath, config.name));
+        }))(config.loader, config.name));
     return ((function checkLoaded() {
           if (window.__sketchLoadComplete) {
             window.__sketchLoadComplete = false;
@@ -198,18 +198,18 @@ function exportCurrentSketch() {
   console.log("SVG export requires creating canvas with SVG renderer");
 }
 
-function registerSketch(name, importPath) {
+function registerSketch(name, loader) {
   var init = state.contents;
   state.contents = {
     currentP5: init.currentP5,
     sketches: state.contents.sketches.concat([{
             name: name,
-            importPath: importPath
+            loader: loader
           }]),
     currentIndex: init.currentIndex,
     isLoading: init.isLoading
   };
-  console.log("Registered sketch: " + name + " (" + importPath + ")");
+  console.log("Registered sketch: " + name);
 }
 
 function init() {

@@ -15,20 +15,21 @@ import p5 from "p5";
 // Import only the sketch manager
 import { registerSketch, init } from "./SketchManager.res.mjs";
 
-// Register sketches with their import paths (they'll be loaded on demand)
-const sketches = [
-  ["Plotter Art - Circles", "./PlotterArtSketch.res.mjs"],
-  ["Wave Function Collapse - Lines", "./WFCPlotterSketch.res.mjs"],
-  ["Wave Function Collapse - Pipes", "./WFCPipesSketch.res.mjs"],
-  ["Wave Function Collapse - Wood Grain", "./WFCWoodGrainSketch.res.mjs"],
-  ["Grid - Tiled Shapes", "./GridSketch.res.mjs"],
-  ["Wavy Lines - Center Focus", "./WavyLinesSketch.res.mjs"],
-  ["Tiling Pattern", "./TilingSketch.res.mjs"],
-  ["Wavy Image Halftone", "./WavyImageSketch.res.mjs"],
-];
+// Create a map of sketch loaders (actual import functions)
+const sketchLoaders = {
+  "Plotter Art - Circles": () => import("./PlotterArtSketch.res.mjs"),
+  "Wave Function Collapse - Lines": () => import("./WFCPlotterSketch.res.mjs"),
+  "Wave Function Collapse - Pipes": () => import("./WFCPipesSketch.res.mjs"),
+  "Wave Function Collapse - Wood Grain": () => import("./WFCWoodGrainSketch.res.mjs"),
+  "Grid - Tiled Shapes": () => import("./GridSketch.res.mjs"),
+  "Wavy Lines - Center Focus": () => import("./WavyLinesSketch.res.mjs"),
+  "Tiling Pattern": () => import("./TilingSketch.res.mjs"),
+  "Wavy Image Halftone": () => import("./WavyImageSketch.res.mjs"),
+};
 
-sketches.forEach(([name, path]) => {
-  registerSketch(name, new URL(path, import.meta.url).href);
+// Register sketches with loader functions
+Object.keys(sketchLoaders).forEach(name => {
+  registerSketch(name, sketchLoaders[name]);
 });
 
 // Initialize the sketch manager

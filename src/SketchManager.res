@@ -1,8 +1,10 @@
 // Sketch Manager - handles switching between different sketches
 
+type loaderFn
+
 type sketchConfig = {
   name: string,
-  importPath: string,
+  loader: loaderFn,
 }
 
 type state = {
@@ -112,11 +114,11 @@ let switchToSketch = (index: int) => {
   | Some(config) => {
       Console.log(`Dynamically loading sketch: ${config.name}`)
 
-      // Dynamically import the sketch module and p5
+      // Call the loader function and handle the promise
       %raw(`
-        (function(importPath, sketchName) {
+        (function(loader, sketchName) {
           Promise.all([
-            import(importPath),
+            loader(),
             import('p5')
           ])
             .then(([sketchModule, p5Module]) => {
@@ -140,7 +142,7 @@ let switchToSketch = (index: int) => {
               window.__sketchLoadError = err;
             });
         })
-      `)(config.importPath, config.name)
+      `)(config.loader, config.name)
 
       // Poll for completion
       %raw(`
@@ -295,13 +297,13 @@ let exportCurrentSketch = () => {
   }
 }
 
-// Register a sketch with its import path
-let registerSketch = (name: string, importPath: string) => {
+// Register a sketch with its loader function
+let registerSketch = (name: string, loader: loaderFn) => {
   state := {
       ...state.contents,
-      sketches: Array.concat(state.contents.sketches, [{name, importPath}]),
+      sketches: Array.concat(state.contents.sketches, [{name, loader}]),
     }
-  Console.log(`Registered sketch: ${name} (${importPath})`)
+  Console.log(`Registered sketch: ${name}`)
 }
 
 // Initialize the sketch manager
