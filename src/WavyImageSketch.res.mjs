@@ -10,6 +10,22 @@ var tileSize = {
   contents: 20
 };
 
+var lineThickness = {
+  contents: 2.0
+};
+
+var waveAmplitude = {
+  contents: 0.2
+};
+
+var waveFrequency = {
+  contents: 3.0
+};
+
+var lineSteps = {
+  contents: 30
+};
+
 var imageBaseUrl = {
   contents: "https://placecats.com"
 };
@@ -27,16 +43,17 @@ var paperSize = {
 };
 
 function drawWavyVertical(p, x, y, size) {
-  var amplitude = size * 0.15;
+  var steps = lineSteps.contents;
+  var amplitude = size * waveAmplitude.contents;
   var centerX = x + size / 2.0;
-  for(var i = 0; i <= 20; ++i){
+  for(var i = 0; i <= steps; ++i){
     if (i > 0) {
-      var t = i / 20;
-      var prevT = (i - 1 | 0) / 20;
+      var t = i / steps;
+      var prevT = (i - 1 | 0) / steps;
       var yPos = y + t * size;
       var prevY = y + prevT * size;
-      var wave = Math.sin(t * 2.0 * Math.PI * 2.0) * amplitude;
-      var prevWave = Math.sin(prevT * 2.0 * Math.PI * 2.0) * amplitude;
+      var wave = Math.sin(t * 2.0 * Math.PI * waveFrequency.contents) * amplitude;
+      var prevWave = Math.sin(prevT * 2.0 * Math.PI * waveFrequency.contents) * amplitude;
       var xPos = centerX + wave;
       var prevX = centerX + prevWave;
       p.line(prevX, prevY, xPos, yPos);
@@ -46,16 +63,17 @@ function drawWavyVertical(p, x, y, size) {
 }
 
 function drawWavyHorizontal(p, x, y, size) {
-  var amplitude = size * 0.15;
+  var steps = lineSteps.contents;
+  var amplitude = size * waveAmplitude.contents;
   var centerY = y + size / 2.0;
-  for(var i = 0; i <= 20; ++i){
+  for(var i = 0; i <= steps; ++i){
     if (i > 0) {
-      var t = i / 20;
-      var prevT = (i - 1 | 0) / 20;
+      var t = i / steps;
+      var prevT = (i - 1 | 0) / steps;
       var xPos = x + t * size;
       var prevX = x + prevT * size;
-      var wave = Math.sin(t * 2.0 * Math.PI * 2.0) * amplitude;
-      var prevWave = Math.sin(prevT * 2.0 * Math.PI * 2.0) * amplitude;
+      var wave = Math.sin(t * 2.0 * Math.PI * waveFrequency.contents) * amplitude;
+      var prevWave = Math.sin(prevT * 2.0 * Math.PI * waveFrequency.contents) * amplitude;
       var yPos = centerY + wave;
       var prevY = centerY + prevWave;
       p.line(prevX, prevY, xPos, yPos);
@@ -64,26 +82,34 @@ function drawWavyHorizontal(p, x, y, size) {
   }
 }
 
+function drawDiagonal(p, x, y, size, direction) {
+  if (direction) {
+    p.line(x, y, x + size, y + size);
+  } else {
+    p.line(x + size, y, x, y + size);
+  }
+}
+
 function drawTileForBrightness(p, x, y, size, brightness) {
-  if (brightness < 64.0) {
-    drawWavyVertical(p, x, y, size);
-    drawWavyVertical(p, x + size / 2.0, y, size / 2.0);
-    drawWavyHorizontal(p, x, y, size);
-    return drawWavyHorizontal(p, x, y + size / 2.0, size);
-  }
-  if (brightness < 128.0) {
-    drawWavyVertical(p, x, y, size);
-    return drawWavyHorizontal(p, x, y, size);
-  }
-  if (brightness >= 192.0) {
-    return ;
-  }
   var gridX = x / size | 0;
   var gridY = y / size | 0;
-  if ((gridX + gridY | 0) % 2 === 0) {
-    return drawWavyVertical(p, x, y, size);
-  } else {
+  if (brightness < 50.0) {
+    drawWavyVertical(p, x, y, size);
+    drawWavyHorizontal(p, x, y, size);
+    return drawDiagonal(p, x, y, size, true);
+  } else if (brightness < 100.0) {
+    drawWavyVertical(p, x, y, size);
     return drawWavyHorizontal(p, x, y, size);
+  } else if (brightness < 150.0) {
+    if ((gridX + gridY | 0) % 2 === 0) {
+      return drawWavyVertical(p, x, y, size);
+    } else {
+      return drawWavyHorizontal(p, x, y, size);
+    }
+  } else if (brightness < 200.0 && (gridX + gridY | 0) % 3 === 0) {
+    return drawDiagonal(p, x, y, size, gridX % 2 === 0);
+  } else {
+    return ;
   }
 }
 
@@ -92,7 +118,7 @@ function draw(p, paper) {
   paperSize.contents = paper;
   p.background(255);
   p.stroke(0);
-  p.strokeWeight(1);
+  p.strokeWeight(lineThickness.contents | 0);
   p.noFill();
   var img = loadedImage.contents;
   if (img !== undefined) {
@@ -179,6 +205,63 @@ function setupControls(p) {
           redraw();
         }));
   controlsDiv.appendChild(tileSizeInput);
+  var thicknessLabel = document.createElement("label");
+  thicknessLabel.textContent = "Line Thickness";
+  thicknessLabel.setAttribute("for", "line-thickness");
+  thicknessLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
+  controlsDiv.appendChild(thicknessLabel);
+  var thicknessInput = document.createElement("input");
+  thicknessInput.setAttribute("type", "number");
+  thicknessInput.setAttribute("id", "line-thickness");
+  thicknessInput.value = "2";
+  thicknessInput.setAttribute("min", "1");
+  thicknessInput.setAttribute("max", "5");
+  thicknessInput.setAttribute("step", "0.5");
+  thicknessInput.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  thicknessInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(thicknessInput.value), 2.0);
+          lineThickness.contents = value;
+          redraw();
+        }));
+  controlsDiv.appendChild(thicknessInput);
+  var amplitudeLabel = document.createElement("label");
+  amplitudeLabel.textContent = "Wave Amplitude";
+  amplitudeLabel.setAttribute("for", "wave-amplitude");
+  amplitudeLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
+  controlsDiv.appendChild(amplitudeLabel);
+  var amplitudeInput = document.createElement("input");
+  amplitudeInput.setAttribute("type", "number");
+  amplitudeInput.setAttribute("id", "wave-amplitude");
+  amplitudeInput.value = "0.2";
+  amplitudeInput.setAttribute("min", "0");
+  amplitudeInput.setAttribute("max", "0.5");
+  amplitudeInput.setAttribute("step", "0.05");
+  amplitudeInput.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  amplitudeInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(amplitudeInput.value), 0.2);
+          waveAmplitude.contents = value;
+          redraw();
+        }));
+  controlsDiv.appendChild(amplitudeInput);
+  var frequencyLabel = document.createElement("label");
+  frequencyLabel.textContent = "Wave Frequency";
+  frequencyLabel.setAttribute("for", "wave-frequency");
+  frequencyLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
+  controlsDiv.appendChild(frequencyLabel);
+  var frequencyInput = document.createElement("input");
+  frequencyInput.setAttribute("type", "number");
+  frequencyInput.setAttribute("id", "wave-frequency");
+  frequencyInput.value = "3";
+  frequencyInput.setAttribute("min", "1");
+  frequencyInput.setAttribute("max", "10");
+  frequencyInput.setAttribute("step", "0.5");
+  frequencyInput.className = "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500";
+  frequencyInput.addEventListener("input", (function () {
+          var value = Core__Option.getOr(Core__Float.fromString(frequencyInput.value), 3.0);
+          waveFrequency.contents = value;
+          redraw();
+        }));
+  controlsDiv.appendChild(frequencyInput);
   var previewLabel = document.createElement("label");
   previewLabel.textContent = "Image Preview";
   previewLabel.className = "block text-sm font-medium text-zinc-300 mb-1 mt-3";
@@ -262,12 +345,17 @@ var createSketch = PlotterFrame.createPlotterSketch(drawWithControls);
 
 export {
   tileSize ,
+  lineThickness ,
+  waveAmplitude ,
+  waveFrequency ,
+  lineSteps ,
   imageBaseUrl ,
   loadedImage ,
   p5Instance ,
   paperSize ,
   drawWavyVertical ,
   drawWavyHorizontal ,
+  drawDiagonal ,
   drawTileForBrightness ,
   draw ,
   redraw ,

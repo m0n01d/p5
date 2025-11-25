@@ -3,6 +3,12 @@
 // Tile size in pixels
 let tileSize = ref(20)
 
+// Line styling parameters
+let lineThickness = ref(2.0)
+let waveAmplitude = ref(0.2) // Relative to tile size
+let waveFrequency = ref(3.0) // Number of waves per line
+let lineSteps = ref(30) // Smoothness of curves
+
 // Base image URL (without size parameters)
 let imageBaseUrl = ref("https://placecats.com")
 
@@ -15,8 +21,8 @@ let paperSize: ref<option<PlotterFrame.paperSize>> = ref(None)
 
 // Draw a wavy vertical line in a tile
 let drawWavyVertical = (p: P5.t, x: float, y: float, size: float) => {
-  let steps = 20
-  let amplitude = size *. 0.15
+  let steps = lineSteps.contents
+  let amplitude = size *. waveAmplitude.contents
   let centerX = x +. size /. 2.0
 
   for i in 0 to steps {
@@ -27,8 +33,8 @@ let drawWavyVertical = (p: P5.t, x: float, y: float, size: float) => {
       let yPos = y +. t *. size
       let prevY = y +. prevT *. size
 
-      let wave = Js.Math.sin(t *. 2.0 *. Js.Math._PI *. 2.0) *. amplitude
-      let prevWave = Js.Math.sin(prevT *. 2.0 *. Js.Math._PI *. 2.0) *. amplitude
+      let wave = Js.Math.sin(t *. 2.0 *. Js.Math._PI *. waveFrequency.contents) *. amplitude
+      let prevWave = Js.Math.sin(prevT *. 2.0 *. Js.Math._PI *. waveFrequency.contents) *. amplitude
 
       let xPos = centerX +. wave
       let prevX = centerX +. prevWave
@@ -40,8 +46,8 @@ let drawWavyVertical = (p: P5.t, x: float, y: float, size: float) => {
 
 // Draw a wavy horizontal line in a tile
 let drawWavyHorizontal = (p: P5.t, x: float, y: float, size: float) => {
-  let steps = 20
-  let amplitude = size *. 0.15
+  let steps = lineSteps.contents
+  let amplitude = size *. waveAmplitude.contents
   let centerY = y +. size /. 2.0
 
   for i in 0 to steps {
@@ -52,8 +58,8 @@ let drawWavyHorizontal = (p: P5.t, x: float, y: float, size: float) => {
       let xPos = x +. t *. size
       let prevX = x +. prevT *. size
 
-      let wave = Js.Math.sin(t *. 2.0 *. Js.Math._PI *. 2.0) *. amplitude
-      let prevWave = Js.Math.sin(prevT *. 2.0 *. Js.Math._PI *. 2.0) *. amplitude
+      let wave = Js.Math.sin(t *. 2.0 *. Js.Math._PI *. waveFrequency.contents) *. amplitude
+      let prevWave = Js.Math.sin(prevT *. 2.0 *. Js.Math._PI *. waveFrequency.contents) *. amplitude
 
       let yPos = centerY +. wave
       let prevY = centerY +. prevWave
@@ -63,29 +69,45 @@ let drawWavyHorizontal = (p: P5.t, x: float, y: float, size: float) => {
   }
 }
 
+// Draw a diagonal line in a tile
+let drawDiagonal = (p: P5.t, x: float, y: float, size: float, direction: bool) => {
+  if direction {
+    // Top-left to bottom-right
+    p->P5.line(x, y, x +. size, y +. size)
+  } else {
+    // Top-right to bottom-left
+    p->P5.line(x +. size, y, x, y +. size)
+  }
+}
+
 // Draw a tile based on brightness (0 = black, 255 = white)
 let drawTileForBrightness = (p: P5.t, x: float, y: float, size: float, brightness: float) => {
-  // Very dark (0-64): 2 vertical + 2 horizontal lines
-  if brightness < 64.0 {
-    drawWavyVertical(p, x, y, size)
-    drawWavyVertical(p, x +. size /. 2.0, y, size /. 2.0)
-    drawWavyHorizontal(p, x, y, size)
-    drawWavyHorizontal(p, x, y +. size /. 2.0, size)
-  } else if brightness < 128.0 {
-    // Medium dark (64-128): 1 vertical + 1 horizontal
+  let gridX = (x /. size)->Float.toInt
+  let gridY = (y /. size)->Float.toInt
+
+  // Very dark (0-50): dense crosshatch with diagonals
+  if brightness < 50.0 {
     drawWavyVertical(p, x, y, size)
     drawWavyHorizontal(p, x, y, size)
-  } else if brightness < 192.0 {
-    // Medium light (128-192): 1 line (alternate between vertical and horizontal)
-    let gridX = (x /. size)->Float.toInt
-    let gridY = (y /. size)->Float.toInt
+    drawDiagonal(p, x, y, size, true)
+  } else if brightness < 100.0 {
+    // Dark (50-100): wavy crosshatch
+    drawWavyVertical(p, x, y, size)
+    drawWavyHorizontal(p, x, y, size)
+  } else if brightness < 150.0 {
+    // Medium-dark (100-150): alternating wavy lines
     if mod(gridX + gridY, 2) == 0 {
       drawWavyVertical(p, x, y, size)
     } else {
       drawWavyHorizontal(p, x, y, size)
     }
+  } else if brightness < 200.0 {
+    // Medium-light (150-200): sparse diagonals
+    if mod(gridX + gridY, 3) == 0 {
+      drawDiagonal(p, x, y, size, mod(gridX, 2) == 0)
+    }
   }
-  // Very light (192-255): blank (no lines)
+  // Very light (200-255): blank (no lines)
 }
 
 // Draw the image using wavy tiles
@@ -95,7 +117,7 @@ let draw = (p: P5.t, paper: PlotterFrame.paperSize) => {
 
   p->P5.background(255)
   p->P5.stroke(0)
-  p->P5.strokeWeight(1)
+  p->P5.strokeWeight(lineThickness.contents->Float.toInt)
   p->P5.noFill
 
   switch loadedImage.contents {
@@ -211,6 +233,90 @@ let setupControls = (p: P5.t) => {
         })
 
         container->PlotterFrame.appendChild(tileSizeInput)
+
+        // Line thickness control
+        let thicknessLabel = PlotterFrame.createElement("label")
+        thicknessLabel->PlotterFrame.setTextContent("Line Thickness")
+        thicknessLabel->PlotterFrame.setAttribute("for", "line-thickness")
+        thicknessLabel->PlotterFrame.setClassName(
+          "block text-sm font-medium text-zinc-300 mb-1 mt-3",
+        )
+        container->PlotterFrame.appendChild(thicknessLabel)
+
+        let thicknessInput = PlotterFrame.createElement("input")
+        thicknessInput->PlotterFrame.setAttribute("type", "number")
+        thicknessInput->PlotterFrame.setAttribute("id", "line-thickness")
+        thicknessInput->PlotterFrame.setValue("2")
+        thicknessInput->PlotterFrame.setAttribute("min", "1")
+        thicknessInput->PlotterFrame.setAttribute("max", "5")
+        thicknessInput->PlotterFrame.setAttribute("step", "0.5")
+        thicknessInput->PlotterFrame.setClassName(
+          "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+        )
+
+        thicknessInput->PlotterFrame.addEventListener("input", () => {
+          let value = thicknessInput->PlotterFrame.value->Float.fromString->Option.getOr(2.0)
+          lineThickness := value
+          redraw()
+        })
+
+        container->PlotterFrame.appendChild(thicknessInput)
+
+        // Wave amplitude control
+        let amplitudeLabel = PlotterFrame.createElement("label")
+        amplitudeLabel->PlotterFrame.setTextContent("Wave Amplitude")
+        amplitudeLabel->PlotterFrame.setAttribute("for", "wave-amplitude")
+        amplitudeLabel->PlotterFrame.setClassName(
+          "block text-sm font-medium text-zinc-300 mb-1 mt-3",
+        )
+        container->PlotterFrame.appendChild(amplitudeLabel)
+
+        let amplitudeInput = PlotterFrame.createElement("input")
+        amplitudeInput->PlotterFrame.setAttribute("type", "number")
+        amplitudeInput->PlotterFrame.setAttribute("id", "wave-amplitude")
+        amplitudeInput->PlotterFrame.setValue("0.2")
+        amplitudeInput->PlotterFrame.setAttribute("min", "0")
+        amplitudeInput->PlotterFrame.setAttribute("max", "0.5")
+        amplitudeInput->PlotterFrame.setAttribute("step", "0.05")
+        amplitudeInput->PlotterFrame.setClassName(
+          "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+        )
+
+        amplitudeInput->PlotterFrame.addEventListener("input", () => {
+          let value = amplitudeInput->PlotterFrame.value->Float.fromString->Option.getOr(0.2)
+          waveAmplitude := value
+          redraw()
+        })
+
+        container->PlotterFrame.appendChild(amplitudeInput)
+
+        // Wave frequency control
+        let frequencyLabel = PlotterFrame.createElement("label")
+        frequencyLabel->PlotterFrame.setTextContent("Wave Frequency")
+        frequencyLabel->PlotterFrame.setAttribute("for", "wave-frequency")
+        frequencyLabel->PlotterFrame.setClassName(
+          "block text-sm font-medium text-zinc-300 mb-1 mt-3",
+        )
+        container->PlotterFrame.appendChild(frequencyLabel)
+
+        let frequencyInput = PlotterFrame.createElement("input")
+        frequencyInput->PlotterFrame.setAttribute("type", "number")
+        frequencyInput->PlotterFrame.setAttribute("id", "wave-frequency")
+        frequencyInput->PlotterFrame.setValue("3")
+        frequencyInput->PlotterFrame.setAttribute("min", "1")
+        frequencyInput->PlotterFrame.setAttribute("max", "10")
+        frequencyInput->PlotterFrame.setAttribute("step", "0.5")
+        frequencyInput->PlotterFrame.setClassName(
+          "w-full px-3 py-2 bg-zinc-700 border border-zinc-600 rounded-md text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500",
+        )
+
+        frequencyInput->PlotterFrame.addEventListener("input", () => {
+          let value = frequencyInput->PlotterFrame.value->Float.fromString->Option.getOr(3.0)
+          waveFrequency := value
+          redraw()
+        })
+
+        container->PlotterFrame.appendChild(frequencyInput)
 
         // Image preview
         let previewLabel = PlotterFrame.createElement("label")
